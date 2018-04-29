@@ -2,9 +2,9 @@
 	"port" : 8080,
 	"beans" : {
 		"javax.sql.DataSource" : {
-			"type" : "com.alibaba.druid.pool.DruidDataSource",
+			"type" : "com.alibaba.druid.pool.DruidDataSource。class",
 			"driver" : "org.postgresql.Driver",
-			"url" : "jdbc:postgresql://10.9.17.220/vertxdb",
+			"url" : "jdbc:postgresql://dbserver/vertxdb",
 			"username" : "postgres",
 			"password" : "postgres",
 			"initialSize":"5",
@@ -22,7 +22,7 @@
 			"maxPoolPreparedStatementPerConnectionSize" : "20",
 			"filters" : "stat,wall,log4j",
 			"connectionProperties" : "druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000",
-		 	"useGlobalDataSourceStat" : "true",
+		 	"useGlobalDataSourceStat" : "true"
 		}
 		
 	}

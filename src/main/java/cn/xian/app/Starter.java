@@ -9,7 +9,7 @@ public class Starter extends OIOVerticle {
 
 	public static void main(String[] args) {
 		
-    	Launcher.main(new String[]{"run",Starter.class.getName(),"-conf","src/main/java/config.json"});
+    	Launcher.main(new String[]{"run",Starter.class.getName(),"-conf","src/main/java/conf/config.json"});
 	}
 
 }
