@@ -2,9 +2,9 @@
 	"port" : 8080,
 	"beans" : {
 		"javax.sql.DataSource" : {
-			"type" : "com.alibaba.druid.pool.DruidDataSource。class",
+			"@TYPE" : "com.alibaba.druid.pool.DruidDataSource",
 			"driver" : "org.postgresql.Driver",
-			"url" : "jdbc:postgresql://dbserver/vertxdb",
+			"url" : "jdbc:postgresql://localhost/testdb",
 			"username" : "postgres",
 			"password" : "postgres",
 			"initialSize":"5",
