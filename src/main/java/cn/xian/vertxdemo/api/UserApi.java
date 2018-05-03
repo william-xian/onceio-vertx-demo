@@ -1,4 +1,4 @@
-package cn.xian.app.api;
+package cn.xian.vertxdemo.api;
 
 import java.util.HashMap;
 import java.util.Map;

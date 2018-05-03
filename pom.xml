@@ -3,8 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>top.onceio</groupId>
 	<artifactId>onceio-vertx-demo</artifactId>
-	<version>0.0.1</version>
-	
+	<version>0.0.2</version>
 	
 	<build>
 		<plugins>
@@ -65,20 +64,21 @@
 					<mainClass>io.vertx.core.Launcher</mainClass>
 					<arguments>
 						<argument>run</argument>
-						<argument>cn.xian.app.Starter</argument>
+						<argument>cn.xian.vertxdemo.Starter</argument>
 					</arguments>
 				</configuration>
 			</plugin>
 
 		</plugins>
 	</build>
-	
+	<properties>
+		<onceio.ver>0.0.2</onceio.ver>
+	</properties>
 	<dependencies>
-
 		<dependency>
 			<groupId>top.onceio</groupId>
 			<artifactId>onceio-vertx</artifactId>
-			<version>1.0.0</version>
+			<version>${onceio.ver}</version>
 		</dependency>		
 		<dependency>
 			<groupId>com.alibaba</groupId>
