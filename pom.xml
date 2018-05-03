@@ -5,7 +5,6 @@
 	<artifactId>onceio-vertx-demo</artifactId>
 	<version>0.0.1</version>
 	
-	
 	<build>
 		<plugins>
 			<plugin>
@@ -72,13 +71,16 @@
 
 		</plugins>
 	</build>
-	
+	 
+	<properties>
+  		<jetty.scope>compile</jetty.scope>
+  		<onceio.ver>0.0.2</onceio.ver>
+  	</properties>
 	<dependencies>
-
 		<dependency>
 			<groupId>top.onceio</groupId>
 			<artifactId>onceio-vertx</artifactId>
-			<version>1.0.0</version>
+			<version>${onceio.ver}</version>
 		</dependency>		
 		<dependency>
 			<groupId>com.alibaba</groupId>
