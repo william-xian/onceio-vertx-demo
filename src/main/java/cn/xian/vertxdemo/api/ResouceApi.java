@@ -1,6 +1,7 @@
 package cn.xian.vertxdemo.api;
 
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.ext.web.RoutingContext;
 import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.mvc.annocations.Api;
 
@@ -8,11 +9,8 @@ import top.onceio.core.mvc.annocations.Api;
 public class ResouceApi {
 
 	@Api(value="/upload",method = ApiMethod.POST)
-	public void upload(HttpServerRequest req) {
-		req.setExpectMultipart(true);
-		req.uploadHandler(upload -> {
-			upload.streamToFileSystem("tmp/"+upload.filename()+"."+upload.contentType());
-		});
+	public void upload(RoutingContext  event) {
+		System.out.println("--> upload  ");
 	}
 	
 	@Api(value="/s/*",method = ApiMethod.POST)
