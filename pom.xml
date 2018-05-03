@@ -3,7 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>top.onceio</groupId>
 	<artifactId>onceio-vertx-demo</artifactId>
+<<<<<<< HEAD
 	<version>0.0.2</version>
+=======
+	<version>0.0.1</version>
+>>>>>>> branch 'master' of https://github.com/william-xian/onceio-vertx-demo.git
 	
 	<build>
 		<plugins>
@@ -71,9 +75,17 @@
 
 		</plugins>
 	</build>
+<<<<<<< HEAD
 	<properties>
 		<onceio.ver>0.0.2</onceio.ver>
 	</properties>
+=======
+	 
+	<properties>
+  		<jetty.scope>compile</jetty.scope>
+  		<onceio.ver>0.0.2</onceio.ver>
+  	</properties>
+>>>>>>> branch 'master' of https://github.com/william-xian/onceio-vertx-demo.git
 	<dependencies>
 		<dependency>
 			<groupId>top.onceio</groupId>
