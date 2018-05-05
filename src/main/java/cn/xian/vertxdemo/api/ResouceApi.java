@@ -9,8 +9,19 @@ import top.onceio.core.mvc.annocations.Api;
 public class ResouceApi {
 
 	@Api(value="/upload",method = ApiMethod.POST)
-	public void upload(RoutingContext  event) {
-		System.out.println("--> upload  ");
+	public void upload(RoutingContext  ctx) {
+		HttpServerRequest req = ctx.request();
+		req.setExpectMultipart(true);
+		req.uploadHandler(upload -> {
+			upload.exceptionHandler(cause -> {
+				req.response().setChunked(false).end("Upload failed");
+			});
+
+			upload.endHandler(v -> {
+				req.response().setChunked(false).end("Successfully uploaded to " + upload.filename());
+			});
+			upload.streamToFileSystem(upload.filename());
+		});
 	}
 	
 	@Api(value="/s/*",method = ApiMethod.POST)
