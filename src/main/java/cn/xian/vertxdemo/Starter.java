@@ -8,7 +8,6 @@ import top.onceio.plugins.vertx.OIOVerticle;
 public class Starter extends OIOVerticle {
 
 	public static void main(String[] args) {
-		//System.setProperty("vertx.cwd", "E:\\webapp");
     	Launcher.main(new String[]{"run",Starter.class.getName(),"-conf","src/main/java/conf/config.json"});
 	}
 

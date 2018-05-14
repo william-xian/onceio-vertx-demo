@@ -72,7 +72,7 @@
 		</plugins>
 	</build>
 	<properties>
-		<onceio.ver>0.0.3</onceio.ver>
+		<onceio.ver>0.0.4</onceio.ver>
 	</properties>
 	 
 	<dependencies>
