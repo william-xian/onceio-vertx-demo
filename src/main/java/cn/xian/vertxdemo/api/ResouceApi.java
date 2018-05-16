@@ -24,14 +24,15 @@ public class ResouceApi {
 		});
 	}
 	
-	@Api(value="/s/*",method = ApiMethod.POST)
+	@Api(value="/s/*",method = ApiMethod.GET)
 	public void staticResource(HttpServerRequest req) {
 		  String file = "";
 		  if (req.path().equals("/")) {
 		    file = "index.html";
 		  } else if (!req.path().contains("..")) {
-		    file = req.path();
+			  
+		    file = req.path().replaceFirst("/", "");
 		  }
-		  req.response().sendFile("s/" + file);
+		  req.response().sendFile(file);
 	}
 }

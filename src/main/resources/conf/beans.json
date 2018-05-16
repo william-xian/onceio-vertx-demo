@@ -1,5 +1,5 @@
 {
-	"port" : 8080,
+
 	"beans" : {
 		"javax.sql.DataSource" : {
 			"@TYPE" : "com.alibaba.druid.pool.DruidDataSource",

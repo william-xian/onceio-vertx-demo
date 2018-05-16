@@ -1,0 +1,76 @@
+<html>
+<head>
+    <title>SockJS Test</title>
+    <script src="http://cdn.jsdelivr.net/sockjs/0.3.4/sockjs.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<script>
+   var sock = new SockJS('http://localhost:1230/chat');
+   sock.onopen = function() {
+	   $("#msg").append("SockJS opened\n");
+   };
+   sock.onmessage = function(e) {
+       $("#msg").append(e.data +"\n");
+   };
+   
+   sock.onclose = function() {
+	   $("#msg").append("SockJS closed\n");
+   };
+   function send(message) {
+     if (sock.readyState === SockJS.OPEN) {
+        sock.send(message);
+     } else {
+ 	   $("#msg").append("The socket is not open\n");
+     }
+   }
+   
+   $('#btn').bind('keypress',function(event){
+	    if(event.keyCode == "13") {
+	    	console.log('-----------');
+	        send(this.messge);
+	    }
+	});
+   
+   function keycallback(event) {
+	   console.log('-->' + event.keyCode)
+   }
+</script>
+
+<script>
+   var socket;
+   if (window.WebSocket) {
+       socket = new WebSocket("ws://localhost:1230/");
+       socket.onmessage = function(event) {
+     	   $("#msg").append(event.data+"\n");
+       }
+       socket.onopen = function(event) {
+     	   $("#msg").append("WebSocket opened!\n");
+       };
+       socket.onclose = function(event) {
+     	   $("#msg").append("WebSocket closed!\n");
+       };
+   } else {
+ 	   $("#msg").append("Your browser does not support Websockets. (Use Chrome)\n");
+   }
+   function sendWS(message) {
+       if (!window.WebSocket) {
+           return;
+       }
+       if (socket.readyState == WebSocket.OPEN) {
+           socket.send(message);
+       } else {
+     	   $("#msg").append("The websocket is not open.\n");
+       }
+   }
+</script>
+
+<textarea id="msg" rows="40" cols="100">
+</textarea>
+<form onsubmit="return false;">
+    <input id="btn" type="text" name="message"/>
+    <input type="button" value="Send SockJS data" onclick="send(this.form.message.value)"/>
+    <input type="button" value="Send WebSocket data" onclick="sendWS(this.form.message.value)"/>
+</form>
+</body>
+</html>

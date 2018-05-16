@@ -4,11 +4,11 @@ import io.vertx.core.Launcher;
 import top.onceio.core.annotation.BeansIn;
 import top.onceio.plugins.vertx.OIOVerticle;
 
-@BeansIn("cn.xian.vertxdemo")
+@BeansIn(value="cn.xian.vertxdemo",conf="conf")
 public class Starter extends OIOVerticle {
 
 	public static void main(String[] args) {
-    	Launcher.main(new String[]{"run",Starter.class.getName(),"-conf","src/main/java/conf/config.json"});
+    	Launcher.main(new String[]{"run",Starter.class.getName(),"conf","conf/config.json"});
 	}
 
 }
