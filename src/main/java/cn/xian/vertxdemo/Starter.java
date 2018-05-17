@@ -8,7 +8,7 @@ import top.onceio.plugins.vertx.OIOVerticle;
 public class Starter extends OIOVerticle {
 
 	public static void main(String[] args) {
-    	Launcher.main(new String[]{"run",Starter.class.getName(),"conf","conf/config.json"});
+    	Launcher.main(new String[]{"run",Starter.class.getName()});
 	}
 
 }

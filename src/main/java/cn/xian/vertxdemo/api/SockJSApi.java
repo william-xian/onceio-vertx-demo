@@ -8,18 +8,18 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSSocket;
 import top.onceio.core.annotation.Def;
-import top.onceio.core.mvc.annocations.Api;
 import top.onceio.plugins.vertx.VertxSockJSHandler;
+import top.onceio.plugins.vertx.annotation.AsSock;
 
 @Def(nameByInterface = true)
-@Api("/chat")
+@AsSock(prefix="/chat")
 public class SockJSApi implements VertxSockJSHandler {
 
 	@Override
 	public SockJSHandlerOptions getSockJSHandlerOptions() {
 		SockJSHandlerOptions sockJSHandlerOptions = new SockJSHandlerOptions();
 		sockJSHandlerOptions.setHeartbeatInterval(2000);
-		sockJSHandlerOptions.setInsertJSESSIONID(false);
+		sockJSHandlerOptions.setInsertJSESSIONID(true);
 		return sockJSHandlerOptions;
 	}
 

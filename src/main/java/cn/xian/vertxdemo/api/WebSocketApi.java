@@ -9,9 +9,10 @@ import io.vertx.core.http.ServerWebSocket;
 import top.onceio.core.annotation.Def;
 import top.onceio.core.util.OLog;
 import top.onceio.plugins.vertx.VertxWebSocketHandler;
+import top.onceio.plugins.vertx.annotation.AsWebsocket;
 
-
-@Def(nameByInterface=true)
+@Def(nameByInterface = true)
+@AsWebsocket
 public class WebSocketApi implements VertxWebSocketHandler {
 
 	Map<String, ServerWebSocket> userHandler = new ConcurrentHashMap<String, ServerWebSocket>();
