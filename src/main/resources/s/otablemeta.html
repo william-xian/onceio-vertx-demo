@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+ <div id="main" style="height:1000px"></div>
+ <script src="http://echarts.baidu.com/build/dist/echarts-all.js"></script>
+ <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+ 
+ <script>
+         // 基于准备好的dom，初始化echarts图表
+         var myChart = echarts.init(document.getElementById('main')); 
+         
+         $.get('/otablemeta/find',function(resp){
+        	console.log(resp); 
+            var map = new Map();
+            var nodes = [{name:'O',id:0, value:29,depth:0,category:2}];
+            var links = [];
+            var idCounter = 1;
+            resp.data.forEach(function (item){
+                var n = {name:item.name, label:item.name,id:idCounter++,value:25,depth:1,category:1,extra:JSON.parse(item.val)};
+                map.set(item.name,n);
+                nodes.push(n);
+				links.push({ source : 0, target : n.id, weight : 1  });
+                n.extra.columnMetas.forEach(function(col) {
+                	if(col.name != "id" && col.name !="rm") {
+                        var c = {name:(item.name+'.'+col.name), label:col.name,id:idCounter++,value:22,depth:2,category:0,extra:col}
+                        nodes.push(c);
+                        map.set(c.name,c);
+                	}
+                });
+            });
+            
+            for(var i =1; i < nodes.length;i++) {
+            	var n = nodes[i];
+            	var sp = n.name.indexOf('.');
+            	if(sp>0) {
+            		var f = map.get(n.name.substr(0,sp));
+                    links.push({ source : f.id, target : n.id, weight : 1  });
+                    
+                    if(n.extra != null && n.extra.refTable != null) {
+                		var f = map.get(n.extra.refTable);
+                        links.push({ source : f.id, target : n.id, weight : 1  });
+                    }
+            	} else if(n.extra != null && n.extra.extend !=null) {
+            		var f = map.get(n.extra.extend);
+                    links.push({ source : f.id, target : n.id, weight : 1  });
+            	}
+            }
+
+
+         option = {
+             title : {
+                 text: 'Tbl',
+                 subtext: 'Col',
+                 x:'right',
+                 y:'bottom'
+             },
+             tooltip : {
+                 trigger: 'item',
+                 formatter: '{a} : {b}'
+             },
+             toolbox: {
+                 show : true,
+                 feature : {
+                     restore : {show: true},
+                     magicType: {show: true, type: ['force', 'chord']},
+                     saveAsImage : {show: true}
+                 }
+             },
+             legend: {
+                 x: 'left',
+                 data:['字段','表', 'O']
+             },
+             series : [
+                 {
+                     type:'force',
+                     name : "Col",
+                     ribbonType: false,
+                     categories : [
+                         {
+                             name: '字段'
+                         },
+                         {
+                             name: '表'
+                         },
+                         {
+                             name: 'O'
+                         }
+                     ],
+                     itemStyle: {
+                         normal: {
+                             label: {
+                                 show: false
+                             },
+                             nodeStyle : {
+                                 brushType : 'both',
+                                 borderColor : 'rgba(255,215,0,0.6)',
+                                 borderWidth : 1
+                             }
+                         }
+                     },
+                     minRadius : 10,
+                     maxRadius : 30,
+                     coolDown: 0.995,
+                     steps: 100,
+                     nodes : nodes,
+                     links : links
+                 }
+             ]
+         };
+         myChart.setOption(option); 
+
+         });
+
+ 
+</script>
+</body>
+</html>
