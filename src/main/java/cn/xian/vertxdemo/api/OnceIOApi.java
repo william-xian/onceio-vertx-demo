@@ -46,6 +46,7 @@ public class OnceIOApi {
 				parent.put("brief", parentApi.brief());
 			}else if(parentAutoApi != null) {
 				prefix = parentAutoApi.value().getSimpleName().toLowerCase();
+				parent.put("brief", parentAutoApi.brief());
 			}else {
 				content.put("parent", ap.getBean().getClass().getSimpleName());
 			}
