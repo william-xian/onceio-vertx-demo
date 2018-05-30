@@ -8,6 +8,8 @@ import top.onceio.core.db.tbl.OEntity;
 public class Userinfo extends OEntity {
 	@Col(size=20)
 	private String nickname;
+	@Col(size=20)
+	private String email;
 
 	public String getNickname() {
 		return nickname;
@@ -15,6 +17,14 @@ public class Userinfo extends OEntity {
 
 	public void setNickname(String nickname) {
 		this.nickname = nickname;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 	
 }
