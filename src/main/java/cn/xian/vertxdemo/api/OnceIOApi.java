@@ -174,7 +174,7 @@ public class OnceIOApi {
 	}
 	public void resoveClass(Map<String, Object> result, String name, Class<?> type,Type genericType) {
 		if (OReflectUtil.isBaseType(type) || type.isInterface() || type.getName().startsWith("java")) {
-			result.put(name, type.getName());
+			result.put(name, genericType.getTypeName());
 		} else {
 			Map<String, Object> subType;
 			if (!name.equals("")) {
