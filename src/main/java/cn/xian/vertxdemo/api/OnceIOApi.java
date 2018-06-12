@@ -196,15 +196,4 @@ public class OnceIOApi {
 		}
 	}
 
-	public static void main(String[] args) throws NoSuchMethodException, SecurityException {
-		Map<String, Object> result = new HashMap<>();
-		//OnceIOApi api = new OnceIOApi();
-		//result = api.resoveParams(UserinfoHolder.class.getMethod("findByUserinfo", Userinfo.class),null,null);
-		Method m = OnceIOApi.class.getMethod("m");
-		System.out.println(m.getReturnType());
-		System.out.println(m.getGenericReturnType());
-		
-		//System.out.println(OUtils.toPrettyJson(result));
-		
-	}
 }

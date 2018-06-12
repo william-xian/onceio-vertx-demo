@@ -13,7 +13,7 @@
          // 基于准备好的dom，初始化echarts图表
          var myChart = echarts.init(document.getElementById('main')); 
          
-         $.get('/otablemeta/find',function(resp){
+         $.get('/otablemeta?pagesize=1000',function(resp){
         	console.log(resp); 
             var map = new Map();
             var nodes = [{name:'O',id:0, value:29,depth:0,category:2}];
