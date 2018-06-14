@@ -5,16 +5,21 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
+import java.sql.Date;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import top.onceio.core.annotation.OnCreate;
+import top.onceio.core.annotation.Validate;
 import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.beans.ApiPair;
 import top.onceio.core.beans.BeansEden;
+import top.onceio.core.db.annotation.Col;
 import top.onceio.core.db.dao.DaoHolder;
 import top.onceio.core.mvc.annocations.Api;
 import top.onceio.core.mvc.annocations.Attr;
@@ -26,10 +31,43 @@ import top.onceio.core.util.OReflectUtil;
 
 @Api("onceio/")
 public class OnceIOApi {
-	private Map<String,Object> model = new HashMap<>();
-	@Api(value = "apis")
-	public Map<String, Object> apis() {
-		Map<String, Object> apis = new HashMap<String, Object>();
+	private Map<String, Object> model = new HashMap<>();
+	private Map<String, Object> apis = new HashMap<>();
+	
+	@OnCreate
+	public void init() {
+		model.put(Object.class.getName(), Object.class.getName());
+		model.put(Class.class.getName(), Class.class.getName());
+		model.put(Type.class.getName(), Type.class.getName());
+		model.put(String.class.getName(), String.class.getName());
+		model.put(Long.class.getName(), Long.class.getName());
+		model.put(Integer.class.getName(), Integer.class.getName());
+		model.put(Short.class.getName(), Short.class.getName());
+		model.put(Double.class.getName(), Double.class.getName());
+		model.put(Float.class.getName(), Float.class.getName());
+		model.put(Boolean.class.getName(), Boolean.class.getName());
+		model.put(Byte.class.getName(), Byte.class.getName());
+		model.put(Character.class.getName(), Character.class.getName());
+		model.put(Void.class.getName(), Void.class.getName());
+		model.put(void.class.getName(), void.class.getName());
+		model.put(long.class.getName(), long.class.getName());
+		model.put(int.class.getName(), int.class.getName());
+		model.put(short.class.getName(), short.class.getName());
+		model.put(double.class.getName(), double.class.getName());
+		model.put(float.class.getName(), float.class.getName());
+		model.put(boolean.class.getName(), boolean.class.getName());
+		model.put(byte.class.getName(), byte.class.getName());
+		model.put(char.class.getName(), char.class.getName());
+		model.put(Date.class.getName(), Date.class.getName());
+		model.put(List.class.getName(), List.class.getName());
+		model.put(Set.class.getName(), Set.class.getName());
+		model.put(Map.class.getName(), Map.class.getName());
+		model.put(Collection.class.getName(), Collection.class.getName());
+		genericApis();
+	}
+
+	private void genericApis() {
+		apis.clear();
 		apis.put("model", model);
 		Map<String, ApiPair> api = BeansEden.get().getApiResover().getPatternToApi();
 		Map<Object, Set<Method>> beanToMethods = new HashMap<>();
@@ -52,9 +90,9 @@ public class OnceIOApi {
 				continue;
 			}
 			content.put("methodName", method.getName());
-			Map<String, Object> params = resoveParams(bean,method);
+			Map<String, Object> params = resoveParams(bean, method);
 			content.put("params", params);
-			Map<String, Object> returnType = resovleType(bean,method);
+			Map<String, Object> returnType = resovleType(bean, method);
 			content.put("returnType", returnType);
 
 			List<String> methodNames = new ArrayList<>();
@@ -93,21 +131,20 @@ public class OnceIOApi {
 				apis.put((String) parent.get("name"), parent);
 			}
 		}
-		return apis;
 	}
 
 	private Map<String, Object> resovleType(Object bean, Method method) {
 		Class<?> genType = null;
 		Type t = null;
-		if(bean.getClass().isAssignableFrom(DaoHolder.class)) {
+		if (DaoHolder.class.isAssignableFrom(bean.getClass())) {
 			t = DaoHolder.class.getTypeParameters()[0];
 			genType = OReflectUtil.searchGenType(DaoHolder.class, bean.getClass(), t);
 		}
 		Map<String, Object> params = new HashMap<>();
-		if(method.getGenericReturnType().equals(t)) {
-			resoveClass(bean,params, method.getReturnType().getName(), genType,method.getGenericReturnType());
+		if (method.getGenericReturnType().equals(t)) {
+			resoveClass(bean, params, method.getReturnType().getName(), genType, method.getGenericReturnType());
 		} else {
-			resoveClass(bean,params, "", method.getReturnType(),method.getGenericReturnType());	
+			resoveClass(bean, params, "", method.getReturnType(), method.getGenericReturnType());
 		}
 		return params;
 	}
@@ -116,6 +153,7 @@ public class OnceIOApi {
 		Map<String, Object> params = new HashMap<>();
 		for (int i = 0; i < method.getParameterCount(); i++) {
 			Parameter param = method.getParameters()[i];
+			Validate validate = param.getAnnotation(Validate.class);
 			Class<?> paramType = method.getParameterTypes()[i];
 			Type genericType = method.getGenericParameterTypes()[i];
 			Map<String, Object> paramInfo = new HashMap<>();
@@ -152,11 +190,12 @@ public class OnceIOApi {
 
 			if (pname != null) {
 				if (pname.equals("")) {
-					resoveClass(bean, params, "", paramType,genericType);
+					resoveClass(bean, params, "", paramType, genericType);
 				} else {
 					params.put(pname, paramInfo);
 					paramInfo.put("source", psrc);
-					resoveClass(bean, paramInfo, "", paramType,genericType);
+					resovleValidator(paramInfo,pname,validate,null);
+					resoveClass(bean, paramInfo, "", paramType, genericType);
 				}
 			} else {
 				params.put(param.getName(), paramInfo);
@@ -164,36 +203,77 @@ public class OnceIOApi {
 		}
 		return params;
 	}
-	public void resoveClass(Object bean,Map<String, Object> result, String name, Class<?> type,Type genericType) {
-		if (OReflectUtil.isBaseType(type) || type.isInterface() ) {
-			result.put(name, genericType.getTypeName());
-		} else if(!type.equals(genericType)) {
-			if(type.getName().startsWith("java")) {
-				result.put("-"+name, genericType.getTypeName());
-			} else if(bean != null && DaoHolder.class.isAssignableFrom(bean.getClass())) {
-				Type t = DaoHolder.class.getTypeParameters()[0];
-				Class<?> genType = OReflectUtil.searchGenType(DaoHolder.class, bean.getClass(), t);
-				result.put("#"+genericType.getTypeName(), genType);
+	
+	private void resovleValidator(Map<String,Object> result,String name, Validate validate,Col col) {
+		if(col != null && validate == null) {
+			if(col.nullable() == false) {
+				result.put(name+":nullable", col.nullable());
 			}
-		}else {
-			Map<String, Object> subType;
-			if (!name.equals("")) {
-				subType = new HashMap<>();
-				result.put(name, subType);
-				result.put("type", type.getName());
-			} else {
-				subType = result;
+			if(!col.pattern().equals("")) { 
+				result.put(name+":pattern", col.pattern());	
 			}
-			for (Class<?> clazz = type; clazz != null && !OReflectUtil.isBaseType(clazz); clazz = clazz.getSuperclass()) {
-				for (Field field : clazz.getDeclaredFields()) {
-					if(Modifier.isStatic(field.getModifiers())) {
-						continue;
-					} 
-					resoveClass(null, subType, field.getName(), field.getType(),field.getGenericType());
-				}
+		}
+		if(validate != null) {
+			if(validate.nullable() == false) {
+				result.put(name+":nullable", validate.nullable());
 			}
-
+			if(!validate.pattern().equals("")) { 
+				result.put(name+":pattern", validate.pattern());	
+			}
 		}
 	}
 
+	public void resoveClass(Object bean, Map<String, Object> result, String name, Class<?> type, Type genericType) {
+		Map<String, Object> subType;
+		if (!name.equals("")) {
+			subType = new HashMap<>();
+			result.put(name, subType);
+		} else {
+			subType = result;
+		}
+		if (!type.equals(genericType) && bean != null && DaoHolder.class.isAssignableFrom(bean.getClass())) {
+			Type t = DaoHolder.class.getTypeParameters()[0];
+			Class<?> genType = OReflectUtil.searchGenType(DaoHolder.class, bean.getClass(), t);
+			if (genericType.getTypeName().equals("T")) {
+				result.put(name, genType.getName());
+			} else {
+				result.put(name, genericType.getTypeName().replace("<T>", "<" + genType.getName() + ">"));
+			}
+			resoveModel(genType.getTypeName(), genType);
+			resoveModel(genericType.getTypeName(), type);
+		} else {
+			result.put(name, genericType.getTypeName());
+			resoveModel(genericType.getTypeName(), type);
+		}
+	}
+
+	public void resoveModel(String name, Class<?> type) {
+		if (model.containsKey(name)) {
+			return;
+		}
+		if (type.getName().startsWith("java")) {
+			model.put(name, type.getName());
+		} else {
+			Map<String, Object> result = new HashMap<>();
+			model.put(name, result);
+			for (Class<?> clazz = type; clazz != null
+					&& !OReflectUtil.isBaseType(clazz); clazz = clazz.getSuperclass()) {
+				for (Field field : clazz.getDeclaredFields()) {
+					if (Modifier.isStatic(field.getModifiers())) {
+						continue;
+					}
+					result.put(field.getName(), field.getGenericType().getTypeName());
+					resoveModel(field.getGenericType().getTypeName(), field.getType());
+					Validate validate = field.getAnnotation(Validate.class);
+					Col col = field.getAnnotation(Col.class);
+					resovleValidator(result,field.getName(),validate,col);
+				}
+			}
+		}
+	}
+
+	@Api(value = "apis")
+	public Map<String, Object> apis() {
+		return apis;
+	}
 }
