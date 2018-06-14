@@ -71,6 +71,7 @@ public class OnceIOApi {
 		apis.put("model", model);
 		Map<String, ApiPair> api = BeansEden.get().getApiResover().getPatternToApi();
 		Map<Object, Set<Method>> beanToMethods = new HashMap<>();
+		
 		for (Map.Entry<String, ApiPair> entry : api.entrySet()) {
 			Method method = entry.getValue().getMethod();
 			Object bean = entry.getValue().getBean();
@@ -82,7 +83,9 @@ public class OnceIOApi {
 			if (methods.contains(method)) {
 				continue;
 			}
+			
 			methods.add(method);
+			
 			Map<String, Object> content = new HashMap<>();
 			ApiPair ap = entry.getValue();
 			Api apiAnno = method.getAnnotation(Api.class);
@@ -112,25 +115,26 @@ public class OnceIOApi {
 			} else if (parentAutoApi != null) {
 				prefix = parentAutoApi.value().getSimpleName().toLowerCase();
 				parent.put("brief", parentAutoApi.brief());
-			} else {
-				content.put("parent", ap.getBean().getClass().getSimpleName());
 			}
-			content.put("api", prefix + apiAnno.value());
+			content.put("api", apiAnno.value());
 			parent.put("prefix", prefix);
+			
+			
 			@SuppressWarnings("unchecked")
 			Map<String, Object> root = (Map<String, Object>) apis.get(parent.get("name"));
-			if (root != null) {
-				@SuppressWarnings("unchecked")
-				List<Map<String, Object>> subapi = (List<Map<String, Object>>) root.get("subapi");
-				if (subapi == null) {
-					subapi = new ArrayList<>();
-					root.put("subapi", subapi);
-				}
-				subapi.add(content);
-			} else {
+			if (root == null) {
 				apis.put((String) parent.get("name"), parent);
+				root = parent;
 			}
+			@SuppressWarnings("unchecked")
+			List<Map<String, Object>> subapi = (List<Map<String, Object>>) root.get("subapi");
+			if (subapi == null) {
+				subapi = new ArrayList<>();
+				root.put("subapi", subapi);
+			}
+			subapi.add(content);
 		}
+
 	}
 
 	private Map<String, Object> resovleType(Object bean, Method method) {
@@ -272,7 +276,7 @@ public class OnceIOApi {
 		}
 	}
 
-	@Api(value = "apis")
+	@Api(value = "/apis")
 	public Map<String, Object> apis() {
 		return apis;
 	}
