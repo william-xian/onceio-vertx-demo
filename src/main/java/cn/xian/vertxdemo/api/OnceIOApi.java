@@ -29,7 +29,7 @@ import top.onceio.core.mvc.annocations.Header;
 import top.onceio.core.mvc.annocations.Param;
 import top.onceio.core.util.OReflectUtil;
 
-@Api("onceio/")
+@Api("/onceio")
 public class OnceIOApi {
 	private Map<String, Object> model = new HashMap<>();
 	private Map<String, Object> apis = new HashMap<>();
@@ -113,7 +113,7 @@ public class OnceIOApi {
 				prefix = parentApi.value();
 				parent.put("brief", parentApi.brief());
 			} else if (parentAutoApi != null) {
-				prefix = parentAutoApi.value().getSimpleName().toLowerCase();
+				prefix = "/"+parentAutoApi.value().getSimpleName().toLowerCase();
 				parent.put("brief", parentAutoApi.brief());
 			}
 			content.put("api", apiAnno.value());
