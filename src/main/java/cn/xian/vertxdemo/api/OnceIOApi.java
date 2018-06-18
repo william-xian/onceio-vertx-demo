@@ -150,9 +150,9 @@ public class OnceIOApi {
 		}
 		Map<String, Object> params = new HashMap<>();
 		if (method.getGenericReturnType().equals(t)) {
-			resoveClass(bean, params, method.getReturnType().getName(), genType, method.getGenericReturnType());
+			resoveClass(bean, params, ":type", genType, method.getGenericReturnType());
 		} else {
-			resoveClass(bean, params, "", method.getReturnType(), method.getGenericReturnType());
+			resoveClass(bean, params, ":type", method.getReturnType(), method.getGenericReturnType());
 		}
 		return params;
 	}
@@ -198,12 +198,12 @@ public class OnceIOApi {
 
 			if (pname != null) {
 				if (pname.equals("")) {
-					resoveClass(bean, params, "", paramType, genericType);
+					resoveClass(bean, params, ":type", paramType, genericType);
 				} else {
 					params.put(pname, paramInfo);
 					paramInfo.put("source", psrc);
 					resovleValidator(paramInfo,pname,validate,null);
-					resoveClass(bean, paramInfo, "", paramType, genericType);
+					resoveClass(bean, paramInfo, ":type", paramType, genericType);
 				}
 			} else {
 				params.put(param.getName(), paramInfo);
