@@ -116,8 +116,12 @@ public class OnceIOApi {
 				prefix = "/"+parentAutoApi.value().getSimpleName().toLowerCase();
 				parent.put("brief", parentAutoApi.brief());
 			}
-			content.put("api", apiAnno.value());
-			parent.put("prefix", prefix);
+			if(!apiAnno.value().equals("")) {
+				content.put("api", apiAnno.value());
+			}else {
+				content.put("api", "/"+method.getName());
+			}
+			parent.put("api", prefix);
 			
 			
 			@SuppressWarnings("unchecked")
@@ -216,6 +220,9 @@ public class OnceIOApi {
 			if(!col.pattern().equals("")) { 
 				result.put(name+":pattern", col.pattern());	
 			}
+			if(!col.valRef().equals(void.class)) {
+				result.put(name+":valRef", col.valRef().getName());
+			}
 		}
 		if(validate != null) {
 			if(validate.nullable() == false) {
@@ -223,6 +230,9 @@ public class OnceIOApi {
 			}
 			if(!validate.pattern().equals("")) { 
 				result.put(name+":pattern", validate.pattern());	
+			}
+			if(!validate.valRef().equals(void.class)) {
+				result.put(name+":valRef", validate.valRef().getName());
 			}
 		}
 	}
