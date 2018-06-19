@@ -31,6 +31,23 @@ import top.onceio.core.util.OReflectUtil;
 
 @Api("/onceio")
 public class OnceIOApi {
+	/** 特殊字段 */
+	public final static String TYPE = ":type";
+	public final static String NULLABLE = ":nullable";
+	public final static String PATTERN = ":pattern";
+	public final static String VALREF = ":valRef";
+	public final static String MODEL = "model";
+	public final static String API = "api";
+	public final static String SUBAPI = "subapi";
+	public final static String STDAPI = "stdapi";
+	public final static String NAME = "name";
+	public final static String SOURCE = "source";
+	public final static String HTTP_METHODS = "methods";
+	public final static String BRIEF = "brief";
+	public final static String RETURNTYPE = "returnType";
+	public final static String METHODNAME = "methodName";
+	public final static String PARAMS = "params";
+	
 	private Map<String, Object> model = new HashMap<>();
 	private Map<String, Object> apis = new HashMap<>();
 	
@@ -68,7 +85,7 @@ public class OnceIOApi {
 
 	private void genericApis() {
 		apis.clear();
-		apis.put("model", model);
+		apis.put(MODEL, model);
 		Map<String, ApiPair> api = BeansEden.get().getApiResover().getPatternToApi();
 		Map<Object, Set<Method>> beanToMethods = new HashMap<>();
 		
@@ -92,54 +109,57 @@ public class OnceIOApi {
 			if (apiAnno == null) {
 				continue;
 			}
-			content.put("methodName", method.getName());
+			content.put(METHODNAME, method.getName());
 			Map<String, Object> params = resoveParams(bean, method);
-			content.put("params", params);
+			content.put(PARAMS, params);
 			Map<String, Object> returnType = resovleType(bean, method);
-			content.put("returnType", returnType);
+			content.put(RETURNTYPE, returnType);
 
 			List<String> methodNames = new ArrayList<>();
 			for (ApiMethod am : apiAnno.method()) {
 				methodNames.add(am.name());
 			}
-			content.put("methods", methodNames);
-			content.put("brief", apiAnno.brief());
+			content.put(HTTP_METHODS, methodNames);
+			content.put(BRIEF, apiAnno.brief());
 			Api parentApi = ap.getBean().getClass().getAnnotation(Api.class);
 			AutoApi parentAutoApi = ap.getBean().getClass().getAnnotation(AutoApi.class);
 			String prefix = "";
 			Map<String, Object> parent = new HashMap<>();
-			parent.put("name", ap.getBean().getClass().getName().replaceAll("\\$\\$.*$", ""));
+			parent.put(NAME, ap.getBean().getClass().getName().replaceAll("\\$\\$.*$", ""));
 			if (parentApi != null) {
 				prefix = parentApi.value();
-				parent.put("brief", parentApi.brief());
+				parent.put(BRIEF, parentApi.brief());
 			} else if (parentAutoApi != null) {
 				prefix = "/"+parentAutoApi.value().getSimpleName().toLowerCase();
-				parent.put("brief", parentAutoApi.brief());
+				parent.put(BRIEF, parentAutoApi.brief());
+			}
+			if(method.getDeclaringClass().equals(DaoHolder.class)) {
+				content.put(STDAPI, true);
 			}
 			if(!apiAnno.value().equals("")) {
-				content.put("api", apiAnno.value());
+				content.put(API, apiAnno.value());
 			}else {
-				content.put("api", "/"+method.getName());
+				content.put(API, "/"+method.getName());
 			}
-			parent.put("api", prefix);
+			parent.put(API, prefix);
 			
 			
 			@SuppressWarnings("unchecked")
-			Map<String, Object> root = (Map<String, Object>) apis.get(parent.get("name"));
+			Map<String, Object> root = (Map<String, Object>) apis.get(parent.get(NAME));
 			if (root == null) {
-				apis.put((String) parent.get("name"), parent);
+				apis.put((String) parent.get(NAME), parent);
 				root = parent;
 			}
 			@SuppressWarnings("unchecked")
-			List<Map<String, Object>> subapi = (List<Map<String, Object>>) root.get("subapi");
+			List<Map<String, Object>> subapi = (List<Map<String, Object>>) root.get(SUBAPI);
 			if (subapi == null) {
 				subapi = new ArrayList<>();
-				root.put("subapi", subapi);
+				root.put(SUBAPI, subapi);
 			}
 			subapi.add(content);
 		}
-
 	}
+	
 
 	private Map<String, Object> resovleType(Object bean, Method method) {
 		Class<?> genType = null;
@@ -150,9 +170,9 @@ public class OnceIOApi {
 		}
 		Map<String, Object> params = new HashMap<>();
 		if (method.getGenericReturnType().equals(t)) {
-			resoveClass(bean, params, ":type", genType, method.getGenericReturnType());
+			resoveClass(bean, params, TYPE, genType, method.getGenericReturnType());
 		} else {
-			resoveClass(bean, params, ":type", method.getReturnType(), method.getGenericReturnType());
+			resoveClass(bean, params, TYPE, method.getReturnType(), method.getGenericReturnType());
 		}
 		return params;
 	}
@@ -198,12 +218,12 @@ public class OnceIOApi {
 
 			if (pname != null) {
 				if (pname.equals("")) {
-					resoveClass(bean, params, ":type", paramType, genericType);
+					resoveClass(bean, params, TYPE, paramType, genericType);
 				} else {
 					params.put(pname, paramInfo);
-					paramInfo.put("source", psrc);
+					paramInfo.put(SOURCE, psrc);
 					resovleValidator(paramInfo,pname,validate,null);
-					resoveClass(bean, paramInfo, ":type", paramType, genericType);
+					resoveClass(bean, paramInfo, TYPE, paramType, genericType);
 				}
 			} else {
 				params.put(param.getName(), paramInfo);
@@ -213,26 +233,26 @@ public class OnceIOApi {
 	}
 	
 	private void resovleValidator(Map<String,Object> result,String name, Validate validate,Col col) {
-		if(col != null && validate == null) {
-			if(col.nullable() == false) {
-				result.put(name+":nullable", col.nullable());
+		if (col != null && validate == null) {
+			if (col.nullable() == false) {
+				result.put(name + NULLABLE, col.nullable());
 			}
-			if(!col.pattern().equals("")) { 
-				result.put(name+":pattern", col.pattern());	
+			if (!col.pattern().equals("")) {
+				result.put(name + PATTERN, col.pattern());
 			}
-			if(!col.valRef().equals(void.class)) {
-				result.put(name+":valRef", col.valRef().getName());
+			if (!col.valRef().equals(void.class)) {
+				result.put(name + VALREF, col.valRef().getName());
 			}
 		}
-		if(validate != null) {
-			if(validate.nullable() == false) {
-				result.put(name+":nullable", validate.nullable());
+		if (validate != null) {
+			if (validate.nullable() == false) {
+				result.put(name + NULLABLE, validate.nullable());
 			}
-			if(!validate.pattern().equals("")) { 
-				result.put(name+":pattern", validate.pattern());	
+			if (!validate.pattern().equals("")) {
+				result.put(name + PATTERN, validate.pattern());
 			}
-			if(!validate.valRef().equals(void.class)) {
-				result.put(name+":valRef", validate.valRef().getName());
+			if (!validate.valRef().equals(void.class)) {
+				result.put(name + VALREF, validate.valRef().getName());
 			}
 		}
 	}
