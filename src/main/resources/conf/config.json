@@ -1,4 +1,5 @@
 {
 	"port" : 8080,
-	"alipay_appid" : "2018042902607920"
+	"alipay_appid" : "2018042902607920",
+	"alipay_callback" : "http://www.onceio.top/callback/alipay"
 }

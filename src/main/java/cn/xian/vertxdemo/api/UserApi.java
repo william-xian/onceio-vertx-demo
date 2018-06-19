@@ -30,6 +30,8 @@ public class UserApi {
 	private EventBus eb;
 	@Config("alipay_appid")
 	private String ALIPAY_APPID;
+	@Config("alipay_callback")
+	private String ALIPAY_CALLBACK;
 	
 	public static final String ALIPAY_SIGNIN_FORMAT = "https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=%s&scope=get_user_info&redirect_uri=%s&state=init";
 	
@@ -60,9 +62,9 @@ public class UserApi {
 	}
 	
 	@Api("/alientry")
-	public String signinentry(@Param("uri")String uri) {
+	public String signinentry() {
 		try {
-			String redirect_uri = URLEncoder.encode(uri,"UTF8");
+			String redirect_uri = URLEncoder.encode(ALIPAY_CALLBACK,"UTF8");
 			return String.format(ALIPAY_SIGNIN_FORMAT, ALIPAY_APPID,redirect_uri);
 		} catch (UnsupportedEncodingException e) {
 			return null;
