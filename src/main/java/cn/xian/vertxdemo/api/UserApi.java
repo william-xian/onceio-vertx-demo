@@ -37,7 +37,7 @@ public class UserApi {
 	
 	@Api("/signup")
 	public Account signup(@Param("account") String account, @Param("passwd") String passwd) {
-		Cnd<Account> cnd = new Cnd<>();
+		Cnd<Account> cnd = new Cnd<>(Account.class);
 		cnd.eq().setAccount(account);
 		Account entity = accountHolder.fetch(null, cnd);
 		if(entity != null) {
@@ -51,7 +51,7 @@ public class UserApi {
 	}	
 	@Api("/signin")
 	public Userinfo signin(@Param("account") String account, @Param("passwd") String passwd) {
-		Cnd<Account> cnd = new Cnd<>();
+		Cnd<Account> cnd = new Cnd<>(Account.class);
 		cnd.eq().setAccount(account);
 		Account entity = accountHolder.fetch(null, cnd);
 		if(entity == null || entity.getPasswd().equals(MD5.encode(passwd))) {

@@ -13,7 +13,7 @@ public class UserinfoHolder extends DaoHolder<Userinfo> {
 
 	@Api
 	public Userinfo fetchByNickname(@Param("nickname")String nickname) {
-		Cnd<Userinfo> cnd =  new Cnd<>();
+		Cnd<Userinfo> cnd =  new Cnd<>(Userinfo.class);
 		cnd.eq().setNickname(nickname);
 		Userinfo  ui = super.fetch(null, cnd);
 		return ui;
@@ -21,7 +21,7 @@ public class UserinfoHolder extends DaoHolder<Userinfo> {
 	
 	@Api
 	public Page<Userinfo> findByUserinfo(@Param Userinfo ui) {
-		Cnd<Userinfo> cnd =  new Cnd<>();
+		Cnd<Userinfo> cnd =  new Cnd<>(Userinfo.class);
 		cnd.eq().setNickname(ui.getNickname());
 		Page<Userinfo>  uis = super.find(cnd);
 		return uis;
