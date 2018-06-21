@@ -8,7 +8,7 @@ import top.onceio.core.util.OLog;
 public class CallbackApi {
 	
 	@Api("/alipay")
-	public void alipay(@Param("authCode")String authCode) {
-		OLog.info(authCode);
+	public void alipay(@Param("app_id")String appId,@Param("source")String source,@Param("app_auth_code")String authCode) {
+		OLog.info("app_auth_code : "+authCode);
 	}
 }
