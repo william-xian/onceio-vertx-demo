@@ -10,6 +10,8 @@ public class NeureRefence extends OEntity{
 	private Long dependId;
 	@Col(ref=Neure.class)
 	private Long deduceId;
+	@Col
+	private Long group;
 	public Long getDependId() {
 		return dependId;
 	}
