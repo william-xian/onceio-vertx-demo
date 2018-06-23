@@ -30,6 +30,8 @@ public class OAuth2User {
 	 * 用户支付宝账号绑定的邮箱地址
 	 */
 	private String email;
+	/** 生日 */
+	private String birthday;
 
 	public String getAvatar() {
 		return avatar;
@@ -85,6 +87,14 @@ public class OAuth2User {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public String getBirthday() {
+		return birthday;
+	}
+
+	public void setBirthday(String birthday) {
+		this.birthday = birthday;
 	}
 	
 }
