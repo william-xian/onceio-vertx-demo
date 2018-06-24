@@ -19,8 +19,8 @@ public class AlipayOAuth2 implements OAuth2 {
 
 	public static final String ALIPAY_AUTHORIZE_URL = "https://openauth.alipay.com/oauth2/appToAppAuth.htm";
 	public static final String ALIPAY_GATEWAY_URL = "https://openapi.alipay.com/gateway.do";
-	public static final String ONCEIO_GATEWAY_URL = "http://www.onceio.top/gateway/alipay";
-	public static final String ALIPAY_CALLBACK = "http://www.onceio.top/thirdparty/alipay/callback";
+	public static final String ONCEIO_GATEWAY_URL = "http://www.onceio.top/alipay/gateway";
+	public static final String ALIPAY_CALLBACK = "http://www.onceio.top/alipay/callback";
 	protected static String ALIPAY_APPID = "2018042902607920";
 	protected static String APP_PRIVATE_KEY = "mR1mrth3OPMXLJQj5URH9Q==";
 	protected static String ALIPAY_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyEjRdZUK0KxwyyonkICNPI54TAvP9uQrc8/+ZkDzbWjBgUHwNiTKz7pg/RHuLqhdXi+9S9xRsqLnQtFmTe21wZ0Gk+/JDTjxHrY12snCSeQ9osGOe2R6obiJXTDxyYCbMfXxN+c+6dO4ltIUSUpE0J2R1PCuFAPunPiTGVz2b1DwfkbLAfGrKtPTY4bPRazGRX5RchcZdJ9BjOQa54di4VVN/7JLYWEeZgZKTMcbZ2OwV4jms7ONrGYtXMXGxUSyxR2HEGXTZq/cNdgw7t9qv5ExNvYxUXore5q9lpLRD47al69rPgrPRMTzkcYI2/5ikpFYuznu+tCsenEVKJ96wQIDAQAB";
