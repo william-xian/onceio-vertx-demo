@@ -11,7 +11,7 @@ public class NeureRefence extends OEntity{
 	@Col(ref=Neure.class)
 	private Long deduceId;
 	@Col
-	private Long group;
+	private Long comb;
 	public Long getDependId() {
 		return dependId;
 	}
@@ -23,6 +23,12 @@ public class NeureRefence extends OEntity{
 	}
 	public void setDeduceId(Long deduceId) {
 		this.deduceId = deduceId;
+	}
+	public Long getComb() {
+		return comb;
+	}
+	public void setComb(Long comb) {
+		this.comb = comb;
 	}
 	
 }

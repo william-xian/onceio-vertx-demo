@@ -11,7 +11,7 @@ public class Neure extends OEntity{
 	@Col
 	private String brief;
 	@Col
-	private String tag;
+	private String topic;
 	@Col
 	private Long creatorId;
 	
@@ -27,11 +27,12 @@ public class Neure extends OEntity{
 	public void setBrief(String brief) {
 		this.brief = brief;
 	}
-	public String getTag() {
-		return tag;
+
+	public String getTopic() {
+		return topic;
 	}
-	public void setTag(String tag) {
-		this.tag = tag;
+	public void setTopic(String topic) {
+		this.topic = topic;
 	}
 	public Long getCreatorId() {
 		return creatorId;
