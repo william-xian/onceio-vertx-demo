@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import top.onceio.core.annotation.OnCreate;
 import top.onceio.core.annotation.Validate;
 import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.beans.ApiPair;
@@ -51,7 +50,6 @@ public class OnceIOApi {
 	private Map<String, Object> model = new HashMap<>();
 	private Map<String, Object> apis = new HashMap<>();
 	
-	@OnCreate
 	public void init() {
 		model.put(Object.class.getName(), Object.class.getName());
 		model.put(Class.class.getName(), Class.class.getName());
@@ -97,66 +95,66 @@ public class OnceIOApi {
 				methods = new HashSet<>();
 				beanToMethods.put(bean, methods);
 			}
-			if (methods.contains(method)) {
-				continue;
-			}
-			
 			methods.add(method);
-			
-			Map<String, Object> content = new HashMap<>();
-			ApiPair ap = entry.getValue();
-			Api apiAnno = method.getAnnotation(Api.class);
-			if (apiAnno == null) {
-				continue;
+		} 
+		for(Map.Entry<Object, Set<Method>> entry:beanToMethods.entrySet()){
+			Object bean = entry.getKey();
+			Class<?> beanClass = bean.getClass();
+			String name = beanClass.getName().replaceAll("\\$\\$.*$", "");
+			@SuppressWarnings("unchecked")
+			Map<String, Object> parent = (Map<String, Object>) apis.get(name);
+			if (parent == null) {
+				parent = new HashMap<>();
+				parent.put(NAME, name);
+				apis.put(name, parent);
+				String prefix = "";
+				Api parentApi = beanClass.getAnnotation(Api.class);
+				AutoApi parentAutoApi = beanClass.getAnnotation(AutoApi.class);
+				if (parentApi != null) {
+					prefix = parentApi.value();
+					parent.put(BRIEF, parentApi.brief());
+				} else if (parentAutoApi != null) {
+					prefix = "/"+parentAutoApi.value().getSimpleName().toLowerCase();
+					parent.put(BRIEF, parentAutoApi.brief());
+				}
+				parent.put(API, prefix);
 			}
-			content.put(METHODNAME, method.getName());
-			Map<String, Object> params = resoveParams(bean, method);
-			content.put(PARAMS, params);
-			Map<String, Object> returnType = resovleType(bean, method);
-			content.put(RETURNTYPE, returnType);
+			for(Method method : entry.getValue()) {
+				Map<String, Object> content = new HashMap<>();
+				Api apiAnno = method.getAnnotation(Api.class);
+				if (apiAnno == null) {
+					continue;
+				}
+				content.put(METHODNAME, method.getName());
+				Map<String, Object> params = resoveParams(bean, method);
+				content.put(PARAMS, params);
+				Map<String, Object> returnType = resovleType(bean, method);
+				content.put(RETURNTYPE, returnType);
 
-			List<String> methodNames = new ArrayList<>();
-			for (ApiMethod am : apiAnno.method()) {
-				methodNames.add(am.name());
+				List<String> methodNames = new ArrayList<>();
+				for (ApiMethod am : apiAnno.method()) {
+					methodNames.add(am.name());
+				}
+				content.put(HTTP_METHODS, methodNames);
+				content.put(BRIEF, apiAnno.brief());
+
+				if(method.getDeclaringClass().equals(DaoHolder.class)) {
+					content.put(STDAPI, true);
+				}
+				if(!apiAnno.value().equals("")) {
+					content.put(API, apiAnno.value());
+				}else {
+					content.put(API, "/"+method.getName());
+				}
+				@SuppressWarnings("unchecked")
+				List<Map<String, Object>> subapi = (List<Map<String, Object>>) parent.get(SUBAPI);
+				if (subapi == null) {
+					subapi = new ArrayList<>();
+					parent.put(SUBAPI, subapi);
+				}
+				subapi.add(content);
 			}
-			content.put(HTTP_METHODS, methodNames);
-			content.put(BRIEF, apiAnno.brief());
-			Api parentApi = ap.getBean().getClass().getAnnotation(Api.class);
-			AutoApi parentAutoApi = ap.getBean().getClass().getAnnotation(AutoApi.class);
-			String prefix = "";
-			Map<String, Object> parent = new HashMap<>();
-			parent.put(NAME, ap.getBean().getClass().getName().replaceAll("\\$\\$.*$", ""));
-			if (parentApi != null) {
-				prefix = parentApi.value();
-				parent.put(BRIEF, parentApi.brief());
-			} else if (parentAutoApi != null) {
-				prefix = "/"+parentAutoApi.value().getSimpleName().toLowerCase();
-				parent.put(BRIEF, parentAutoApi.brief());
-			}
-			if(method.getDeclaringClass().equals(DaoHolder.class)) {
-				content.put(STDAPI, true);
-			}
-			if(!apiAnno.value().equals("")) {
-				content.put(API, apiAnno.value());
-			}else {
-				content.put(API, "/"+method.getName());
-			}
-			parent.put(API, prefix);
-			
-			
-			@SuppressWarnings("unchecked")
-			Map<String, Object> root = (Map<String, Object>) apis.get(parent.get(NAME));
-			if (root == null) {
-				apis.put((String) parent.get(NAME), parent);
-				root = parent;
-			}
-			@SuppressWarnings("unchecked")
-			List<Map<String, Object>> subapi = (List<Map<String, Object>>) root.get(SUBAPI);
-			if (subapi == null) {
-				subapi = new ArrayList<>();
-				root.put(SUBAPI, subapi);
-			}
-			subapi.add(content);
+
 		}
 	}
 	
@@ -308,6 +306,9 @@ public class OnceIOApi {
 
 	@Api(value = "/apis")
 	public Map<String, Object> apis() {
+		if(model.isEmpty()) {
+			init();
+		}
 		return apis;
 	}
 }

@@ -1,7 +1,5 @@
 package cn.xian.vertxdemo.api;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +12,6 @@ import cn.xian.vertxdemo.utils.MD5;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.Json;
-import top.onceio.core.annotation.Config;
 import top.onceio.core.annotation.Using;
 import top.onceio.core.annotation.Validate;
 import top.onceio.core.db.dao.tpl.Cnd;
@@ -30,13 +27,7 @@ public class UserApi {
 	private UserinfoHolder userinfoHolder;
 	@Using
 	private EventBus eb;
-	@Config("alipay_appid")
-	private String ALIPAY_APPID;
-	@Config("alipay_callback")
-	private String ALIPAY_CALLBACK;
-	
-	public static final String ALIPAY_SIGNIN_FORMAT = "https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=%s&scope=get_user_info&redirect_uri=%s&state=init";
-	
+
 	@Api("/signup")
 	public Account signup(@Validate(nullable=false)@Param("account") String account,@Validate(nullable=false,pattern=".{6,}") @Param("passwd") String passwd) {
 		Cnd<Account> cnd = new Cnd<>(Account.class);
@@ -61,16 +52,6 @@ public class UserApi {
 		}
 		Userinfo ui = userinfoHolder.get(entity.getRefId());
 		return ui;
-	}
-	
-	@Api("/alientry")
-	public String signinentry() {
-		try {
-			String redirect_uri = URLEncoder.encode(ALIPAY_CALLBACK,"UTF8");
-			return String.format(ALIPAY_SIGNIN_FORMAT, ALIPAY_APPID,redirect_uri);
-		} catch (UnsupportedEncodingException e) {
-			return null;
-		}
 	}
 	
 	@Api("/config/")
