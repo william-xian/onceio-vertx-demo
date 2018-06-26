@@ -29,7 +29,7 @@ public class UserApi {
 	private EventBus eb;
 
 	@Api("/signup")
-	public Account signup(@Validate(nullable=false)@Param("account") String account,@Validate(nullable=false,pattern=".{6,}") @Param("passwd") String passwd) {
+	public Userinfo signup(@Validate(nullable=false)@Param("account") String account,@Validate(nullable=false,pattern=".{6,}") @Param("passwd") String passwd) {
 		Cnd<Account> cnd = new Cnd<>(Account.class);
 		cnd.eq().setAccount(account);
 		Account entity = accountHolder.fetch(null, cnd);
@@ -40,7 +40,11 @@ public class UserApi {
 		entity.setAccount(account);
 		entity.setPasswd(MD5.encode(passwd));
 		accountHolder.insert(entity);
-		return entity;
+		Userinfo ui = new Userinfo();
+		ui.setId(entity.getId());
+		ui.setNickname(account);
+		userinfoHolder.insert(ui);
+		return ui;
 	}	
 	@Api("/signin")
 	public Userinfo signin(@Validate(nullable=false)@Param("account") String account, @Param("passwd") String passwd) {
