@@ -1,16 +1,21 @@
 package cn.xian.vertxdemo.api;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cn.xian.vertxdemo.holder.NeureHolder;
 import cn.xian.vertxdemo.holder.NeureRefenceHolder;
 import cn.xian.vertxdemo.model.entity.Neure;
+import cn.xian.vertxdemo.model.entity.NeureRelation;
 import top.onceio.core.annotation.Using;
+import top.onceio.core.db.dao.IdGenerator;
 import top.onceio.core.db.dao.Page;
 import top.onceio.core.db.dao.tpl.Cnd;
 import top.onceio.core.db.dao.tpl.Tpl;
@@ -25,6 +30,8 @@ public class NeureApi {
 	private NeureHolder neureHolder;
 	@Using
 	private NeureRefenceHolder neureRefenceHolder;
+	@Using
+	private IdGenerator idGenerator;
 	
 	private static final String splitPattern = ">|<|=|:|!|,|;|\n";
 	
@@ -90,18 +97,58 @@ public class NeureApi {
 				}
 			}
 			neureHolder.batchInsert(news);
-			
 			Pattern pattern = Pattern.compile(splitPattern);
-			
 			Matcher matcher = pattern.matcher(relation);
+			int last = 0;
+			List<List<String>> left = new ArrayList<>();
+			List<List<String>> right = new ArrayList<>();
+			List<String> group = new ArrayList<>();
+			List<List<String>> cur = left;
+			String rel = null;
 			
-			//TODO
+			Set<String> rels = new HashSet<>();
+			rels.addAll(Arrays.asList(">","<","!",":","="));
+			List<NeureRelation> nrs = new ArrayList<>();
 			while(matcher.find()) {
+				String a = relation.substring(last,matcher.start());
+				group.add(a);
 				String opt = relation.substring(matcher.start(), matcher.end());
-				if(opt.equals("\n")) {
-					
+				if(rels.contains(opt)) {
+					rel=opt;
+					cur.add(group);
+					group =new ArrayList<>();
+					cur = right;
+				} else if(opt.equals(",")) {
+				} else if(opt.equals(";")) {
+					cur.add(group);
+					group =new ArrayList<>();
+				} else if(opt.equals("\n")) {
+					if(rel.equals("<")) {
+						cur = left;
+						left = right;
+						right = cur;
+					}
+					String dname = right.get(0).get(0);
+					Neure deduced = nameToNeure.get(dname);
+					for(List<String> grp:left) {
+						Long comb = null;
+						if(grp.size() > 1) {
+							comb = idGenerator.next(NeureRelation.class);
+						}
+						for(String name:grp) {
+							NeureRelation nr = new NeureRelation();
+							Neure n = nameToNeure.get(name);
+							nr.setDependId(n.getId());
+							nr.setDeduceId(deduced.getId());
+							nr.setComb(comb);
+							nr.setRelation(rel);
+							nrs.add(nr);
+						}	
+					}
 				}
 			}
+			
+			neureRefenceHolder.batchInsert(nrs);
 		}
 		
 	}

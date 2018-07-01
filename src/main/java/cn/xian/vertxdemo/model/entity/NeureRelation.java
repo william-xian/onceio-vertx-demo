@@ -5,11 +5,13 @@ import top.onceio.core.db.annotation.Tbl;
 import top.onceio.core.db.tbl.OEntity;
 
 @Tbl
-public class NeureRefence extends OEntity{
+public class NeureRelation extends OEntity{
 	@Col(ref=Neure.class)
 	private Long dependId;
 	@Col(ref=Neure.class)
 	private Long deduceId;
+	@Col(size=2)
+	private String relation;
 	@Col
 	private Long comb;
 	public Long getDependId() {
@@ -23,6 +25,13 @@ public class NeureRefence extends OEntity{
 	}
 	public void setDeduceId(Long deduceId) {
 		this.deduceId = deduceId;
+	}
+	
+	public String getRelation() {
+		return relation;
+	}
+	public void setRelation(String relation) {
+		this.relation = relation;
 	}
 	public Long getComb() {
 		return comb;
