@@ -1,7 +1,5 @@
 package cn.xian.vertxdemo.model.entity;
 
-import org.postgresql.util.Base64;
-
 import cn.xian.vertxdemo.model.constant.AccountGenre;
 import cn.xian.vertxdemo.utils.AES;
 import top.onceio.core.db.annotation.Col;
@@ -65,10 +63,6 @@ public class Account extends OEntity {
 		this.env = env;
 	}
 	public String getAccessToken() {
-		byte[] result = AES.encrypt(account, passwd + env);
-		if(result != null) {
-			return Base64.encodeBytes(result);
-		}
-		return null;
+		return AES.encode(account, passwd + env);
 	}
 }
