@@ -5,16 +5,13 @@ import top.onceio.core.db.annotation.Tbl;
 import top.onceio.core.db.tbl.OEntity;
 
 @Tbl
-public class Neure extends OEntity{
+public class Topic extends OEntity{
 	@Col(size=32)
 	private String name;
 	@Col(size=255)
 	private String brief;
-	@Col(ref=Topic.class)
-	private Long topicId;
 	@Col
-	private Long creatorId;
-	
+	private Long genre;
 	public String getName() {
 		return name;
 	}
@@ -27,18 +24,11 @@ public class Neure extends OEntity{
 	public void setBrief(String brief) {
 		this.brief = brief;
 	}
-
-	public Long getTopicId() {
-		return topicId;
+	public Long getGenre() {
+		return genre;
 	}
-	public void setTopicId(Long topicId) {
-		this.topicId = topicId;
-	}
-	public Long getCreatorId() {
-		return creatorId;
-	}
-	public void setCreatorId(Long creatorId) {
-		this.creatorId = creatorId;
+	public void setGenre(Long genre) {
+		this.genre = genre;
 	}
 	
 }
