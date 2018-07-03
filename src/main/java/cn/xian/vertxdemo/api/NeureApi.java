@@ -130,12 +130,12 @@ public class NeureApi {
 					}
 					String dname = right.get(0).get(0);
 					Neure deduced = nameToNeure.get(dname);
-					for(List<String> grp:left) {
+					for (List<String> grp : left) {
 						Long comb = null;
-						if(grp.size() > 1) {
+						if (grp.size() > 1) {
 							comb = idGenerator.next(NeureRelation.class);
 						}
-						for(String name:grp) {
+						for (String name : grp) {
 							NeureRelation nr = new NeureRelation();
 							Neure n = nameToNeure.get(name);
 							nr.setDependId(n.getId());
@@ -143,7 +143,20 @@ public class NeureApi {
 							nr.setComb(comb);
 							nr.setRelation(rel);
 							nrs.add(nr);
-						}	
+						}
+						/** 双向推导 */
+						if (opt.equals("!") || opt.equals("=") || opt.equals(":")) {
+							for (String name : grp) {
+								NeureRelation nr = new NeureRelation();
+								Neure n = nameToNeure.get(name);
+								nr.setDeduceId(n.getId());
+								nr.setDependId(deduced.getId());
+								nr.setComb(comb);
+								nr.setRelation(rel);
+								nrs.add(nr);
+							}
+						}
+						
 					}
 				}
 			}
