@@ -5,6 +5,6 @@ import top.onceio.core.annotation.Def;
 import top.onceio.core.db.dao.DaoHolder;
 
 @Def
-public class NeureRefenceHolder extends DaoHolder<NeureRelation> {
+public class NeureRelationHolder extends DaoHolder<NeureRelation> {
 
 }

@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cn.xian.vertxdemo.holder.NeureHolder;
-import cn.xian.vertxdemo.holder.NeureRefenceHolder;
+import cn.xian.vertxdemo.holder.NeureRelationHolder;
 import cn.xian.vertxdemo.model.entity.Neure;
 import cn.xian.vertxdemo.model.entity.NeureRelation;
 import top.onceio.core.annotation.Using;
@@ -29,7 +29,7 @@ public class NeureApi {
 	@Using
 	private NeureHolder neureHolder;
 	@Using
-	private NeureRefenceHolder neureRefenceHolder;
+	private NeureRelationHolder neureRelationHolder;
 	@Using
 	private IdGenerator idGenerator;
 	
@@ -161,8 +161,43 @@ public class NeureApi {
 				}
 			}
 			
-			neureRefenceHolder.batchInsert(nrs);
+			neureRelationHolder.batchInsert(nrs);
 		}
-		
+	}
+	
+	public Map<String,Object> searchDeduce(@Cookie("userId")Long creatorId,@Param("target")String target, Integer maxStep,@Param("topic")String topic,@Param("nodes")String nodes) {
+		if(maxStep == null) {
+			maxStep = 5;
+		}
+		Cnd<Neure> cn = new Cnd<>(Neure.class);
+		cn.and().eq().setName("target");
+		Neure n = neureHolder.fetch(null, cn);
+		Map<Long,Long> depend = new HashMap<>();
+		List<Long> ids = new ArrayList<>();
+		Set<Long> trace = new HashSet<>();
+		if(n != null) {
+			ids.add(n.getId());
+		}
+		while(!ids.isEmpty() && (--maxStep >= 0)) {
+			Cnd<NeureRelation> cndNR = new Cnd<>(NeureRelation.class);
+			cndNR.and().in(ids.toArray(new Long[0])).setDeduceId(Tpl.USING_LONG);
+			cndNR.setPagesize(100);
+			Page<NeureRelation> page = neureRelationHolder.find(cndNR);
+			ids.clear();
+			for(NeureRelation nr:page.getData()) {
+				depend.put(nr.getDependId(), nr.getDeduceId());
+				if(!trace.contains(nr.getDeduceId())) {
+					ids.add(nr.getDependId());	
+				}
+			}
+		}
+		Cnd<Neure> cnd = new Cnd<>(Neure.class);
+		cnd.setPagesize(10000);
+		cnd.and().in(trace.toArray(new Long[0])).setId(Tpl.USING_LONG);
+		Page<Neure> all = neureHolder.find(cnd);
+		Map<String,Object> result = new HashMap<>();
+		result.put("map", depend);
+		result.put("data", all.getData());
+		return result;
 	}
 }
