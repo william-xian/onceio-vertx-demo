@@ -70,6 +70,9 @@ public class NeureApi {
 	 */
 	@Api("/push")
 	public int push(@Cookie("userId")Long creatorId,@Param("topicId")Long topicId,@Param("relation")String relation) {
+		if(!relation.endsWith("\n")) {
+			relation = relation + "\n";
+		}
 		String[] neures = relation.split(splitPattern);
 		int cnt = 0;
 		if(neures.length > 0) {
@@ -111,24 +114,28 @@ public class NeureApi {
 			rels.addAll(Arrays.asList(">","<","!",":","="));
 			List<NeureRelation> nrs = new ArrayList<>();
 			while(matcher.find()) {
-				String a = relation.substring(last,matcher.start());
+				String a = relation.substring(last, matcher.start());
+				last = matcher.end();
 				group.add(a);
 				String opt = relation.substring(matcher.start(), matcher.end());
 				if(rels.contains(opt)) {
 					rel=opt;
 					cur.add(group);
-					group =new ArrayList<>();
+					group = new ArrayList<>();
+					if(rel.equals("<")) {
+						cur = right;
+						right = left;
+						left = cur;
+					}
 					cur = right;
-				} else if(opt.equals(",")) {
+					group = new ArrayList<>();
+					cur.add(group);
+				}
+				if(opt.equals(",")) {
 				} else if(opt.equals(";")) {
 					cur.add(group);
 					group =new ArrayList<>();
 				} else if(opt.equals("\n")) {
-					if(rel.equals("<")) {
-						cur = left;
-						left = right;
-						right = cur;
-					}
 					String dname = right.get(0).get(0);
 					Neure deduced = nameToNeure.get(dname);
 					for (List<String> grp : left) {
