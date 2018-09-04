@@ -15,7 +15,6 @@ import cn.xian.vertxdemo.holder.NeureRelationHolder;
 import cn.xian.vertxdemo.model.entity.Neure;
 import cn.xian.vertxdemo.model.entity.NeureRelation;
 import top.onceio.core.annotation.Using;
-import top.onceio.core.db.dao.IdGenerator;
 import top.onceio.core.db.dao.Page;
 import top.onceio.core.db.dao.tpl.Cnd;
 import top.onceio.core.db.dao.tpl.Tpl;
@@ -30,10 +29,39 @@ public class NeureApi {
 	private NeureHolder neureHolder;
 	@Using
 	private NeureRelationHolder neureRelationHolder;
-	@Using
-	private IdGenerator idGenerator;
 	
 	private static final String splitPattern = ">|<|=|:|!|,|;|\n";
+
+	public int saveNeures(Long creatorId, Long topicId, String relation, Map<String, Neure> nameToNeure) {
+		String[] neures = relation.split(splitPattern);
+		int cnt = 0;
+		Cnd<Neure> cnd = new Cnd<>(Neure.class);
+		cnd.in(neures).setName(Tpl.USING_S);
+		cnd.and().eq().setCreatorId(creatorId);
+		if(topicId != null) {
+			cnd.and().eq().setTopicId(topicId);
+		}
+		cnd.setPagesize(neures.length);
+		Page<Neure> exists = neureHolder.find(cnd);
+		for(Neure n:exists.getData()) {
+			nameToNeure.put(n.getName(), n);
+		}
+		List<Neure> news = new ArrayList<>();
+		for(String n:neures) {
+			String name = n.trim();
+			if(!name.equals("") && !nameToNeure.containsKey(name)) {
+				Neure e = new Neure();
+				e.setName(name);
+				e.setCreatorId(creatorId);
+				e.setTopicId(topicId);
+				news.add(e);
+				nameToNeure.put(name, e);
+			}
+		}
+		cnt = neureHolder.batchInsert(news);
+		return cnt;
+	}
+	
 	
 	/**
 	 * 六种关系九种操作 以行为单位
@@ -73,34 +101,9 @@ public class NeureApi {
 		if(!relation.endsWith("\n")) {
 			relation = relation + "\n";
 		}
-		String[] neures = relation.split(splitPattern);
-		int cnt = 0;
-		if(neures.length > 0) {
-			Cnd<Neure> cnd = new Cnd<>(Neure.class);
-			cnd.in(neures).setName(Tpl.USING_S);
-			cnd.and().eq().setCreatorId(creatorId);
-			if(topicId != null) {
-				cnd.and().eq().setTopicId(topicId);
-			}
-			cnd.setPagesize(neures.length);
-			Page<Neure> exists = neureHolder.find(cnd);
-			Map<String,Neure> nameToNeure = new HashMap<>();
-			for(Neure n:exists.getData()) {
-				nameToNeure.put(n.getName(), n);
-			}
-			List<Neure> news = new ArrayList<>();
-			for(String n:neures) {
-				String name = n.trim();
-				if(!name.equals("") && !nameToNeure.containsKey(name)) {
-					Neure e = new Neure();
-					e.setName(name);
-					e.setCreatorId(creatorId);
-					e.setTopicId(topicId);
-					news.add(e);
-					nameToNeure.put(name, e);
-				}
-			}
-			cnt = neureHolder.batchInsert(news);
+		Map<String,Neure> nameToNeure = new HashMap<>();
+		int cnt = saveNeures(creatorId,topicId,relation, nameToNeure);
+		if(!nameToNeure.isEmpty()) {
 			Pattern pattern = Pattern.compile(splitPattern);
 			Matcher matcher = pattern.matcher(relation);
 			int last = 0;
@@ -109,7 +112,6 @@ public class NeureApi {
 			List<String> group = new ArrayList<>();
 			List<List<String>> cur = left;
 			String rel = null;
-			
 			Set<String> rels = new HashSet<>();
 			rels.addAll(Arrays.asList(">","<","!",":","="));
 			List<NeureRelation> nrs = new ArrayList<>();
@@ -139,9 +141,10 @@ public class NeureApi {
 					String dname = right.get(0).get(0);
 					Neure deduced = nameToNeure.get(dname);
 					for (List<String> grp : left) {
-						Long comb = null;
-						if (grp.size() > 1) {
-							comb = idGenerator.next(NeureRelation.class);
+						long comb = deduced.getId();
+						for (String name : grp) {
+							Neure n = nameToNeure.get(name);
+							comb = comb * 63 + n.getId();
 						}
 						for (String name : grp) {
 							NeureRelation nr = new NeureRelation();

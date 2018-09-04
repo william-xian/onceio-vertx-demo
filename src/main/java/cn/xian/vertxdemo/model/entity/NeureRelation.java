@@ -1,10 +1,11 @@
 package cn.xian.vertxdemo.model.entity;
 
 import top.onceio.core.db.annotation.Col;
+import top.onceio.core.db.annotation.Constraint;
 import top.onceio.core.db.annotation.Tbl;
 import top.onceio.core.db.tbl.OEntity;
 
-@Tbl
+@Tbl(constraints= {@Constraint(colNames= {"dependId","deduceId","relation","comb"})})
 public class NeureRelation extends OEntity{
 	@Col(ref=Neure.class)
 	private Long dependId;
