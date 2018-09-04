@@ -14,6 +14,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.Json;
 import top.onceio.core.annotation.Using;
 import top.onceio.core.annotation.Validate;
+import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.db.dao.tpl.Cnd;
 import top.onceio.core.exception.Failed;
 import top.onceio.core.mvc.annocations.Api;
@@ -28,7 +29,7 @@ public class UserApi {
 	@Using
 	private EventBus eb;
 
-	@Api("/signup")
+	@Api(value="/signup", method = ApiMethod.POST)
 	public Userinfo signup(@Validate(nullable=false)@Param("account") String account,@Validate(nullable=false,pattern=".{6,}") @Param("passwd") String passwd) {
 		Cnd<Account> cnd = new Cnd<>(Account.class);
 		cnd.eq().setAccount(account);
@@ -45,8 +46,8 @@ public class UserApi {
 		ui.setNickname(account);
 		userinfoHolder.insert(ui);
 		return ui;
-	}	
-	@Api("/signin")
+	}
+	@Api(value="/signin", method = ApiMethod.POST)
 	public Userinfo signin(@Validate(nullable=false)@Param("account") String account, @Param("passwd") String passwd) {
 		Cnd<Account> cnd = new Cnd<>(Account.class);
 		cnd.eq().setAccount(account);
