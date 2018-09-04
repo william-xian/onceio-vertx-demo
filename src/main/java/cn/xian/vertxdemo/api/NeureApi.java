@@ -69,8 +69,9 @@ public class NeureApi {
 		例： 君子 < 文，质; 坦荡荡;务本
 	 */
 	@Api("/push")
-	public void push(@Cookie("userId")Long creatorId,@Param("topicId")Long topicId,@Param("relation")String relation) {
+	public int push(@Cookie("userId")Long creatorId,@Param("topicId")Long topicId,@Param("relation")String relation) {
 		String[] neures = relation.split(splitPattern);
+		int cnt = 0;
 		if(neures.length > 0) {
 			Cnd<Neure> cnd = new Cnd<>(Neure.class);
 			cnd.in(neures).setName(Tpl.USING_S);
@@ -96,7 +97,7 @@ public class NeureApi {
 					nameToNeure.put(name, e);
 				}
 			}
-			neureHolder.batchInsert(news);
+			cnt = neureHolder.batchInsert(news);
 			Pattern pattern = Pattern.compile(splitPattern);
 			Matcher matcher = pattern.matcher(relation);
 			int last = 0;
@@ -163,6 +164,7 @@ public class NeureApi {
 			
 			neureRelationHolder.batchInsert(nrs);
 		}
+		return cnt;
 	}
 	
 	public Map<String,Object> searchDeduce(@Cookie("userId")Long creatorId,@Param("target")String target, Integer maxStep,@Param("topic")String topic,@Param("nodes")String nodes) {
