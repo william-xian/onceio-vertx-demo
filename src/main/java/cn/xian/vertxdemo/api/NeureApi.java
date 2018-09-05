@@ -15,6 +15,7 @@ import cn.xian.vertxdemo.holder.NeureRelationHolder;
 import cn.xian.vertxdemo.model.entity.Neure;
 import cn.xian.vertxdemo.model.entity.NeureRelation;
 import top.onceio.core.annotation.Using;
+import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.db.dao.Page;
 import top.onceio.core.db.dao.tpl.Cnd;
 import top.onceio.core.db.dao.tpl.Tpl;
@@ -22,7 +23,7 @@ import top.onceio.core.mvc.annocations.Api;
 import top.onceio.core.mvc.annocations.Cookie;
 import top.onceio.core.mvc.annocations.Param;
 
-@Api("/neure")
+@Api("/neure_relation")
 public class NeureApi {
 
 	@Using
@@ -32,7 +33,7 @@ public class NeureApi {
 	
 	private static final String splitPattern = ">|<|=|:|!|,|;|\n";
 
-	public int saveNeures(Long creatorId, Long topicId, String relation, Map<String, Neure> nameToNeure) {
+	private int saveNeures(Long creatorId, Long topicId, String relation, Map<String, Neure> nameToNeure) {
 		String[] neures = relation.split(splitPattern);
 		int cnt = 0;
 		Cnd<Neure> cnd = new Cnd<>(Neure.class);
@@ -96,7 +97,7 @@ public class NeureApi {
 		9. 依赖并列 D < A;B
 		例： 君子 < 文，质; 坦荡荡;务本
 	 */
-	@Api("/push")
+	@Api(value="/push", method=ApiMethod.POST)
 	public int push(@Cookie("userId")Long creatorId,@Param("topicId")Long topicId,@Param("relation")String relation) {
 		if(!relation.endsWith("\n")) {
 			relation = relation + "\n";
@@ -176,20 +177,20 @@ public class NeureApi {
 		}
 		return cnt;
 	}
-	
-	public Map<String,Object> searchDeduce(@Cookie("userId")Long creatorId,@Param("target")String target, Integer maxStep,@Param("topic")String topic,@Param("nodes")String nodes) {
-		if(maxStep == null) {
-			maxStep = 5;
-		}
+	@Api("/search")
+	public Map<String,Object> searchDeduce(@Cookie("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds, @Param("nodes")String nodes) {
+		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
-		cn.and().eq().setName("target");
+		cn.and().eq().setName(target);
 		Neure n = neureHolder.fetch(null, cn);
 		Map<Long,Long> depend = new HashMap<>();
 		List<Long> ids = new ArrayList<>();
 		Set<Long> trace = new HashSet<>();
 		if(n != null) {
 			ids.add(n.getId());
+			trace.add(n.getId());
 		}
+		
 		while(!ids.isEmpty() && (--maxStep >= 0)) {
 			Cnd<NeureRelation> cndNR = new Cnd<>(NeureRelation.class);
 			cndNR.and().in(ids.toArray(new Long[0])).setDeduceId(Tpl.USING_LONG);
@@ -198,8 +199,9 @@ public class NeureApi {
 			ids.clear();
 			for(NeureRelation nr:page.getData()) {
 				depend.put(nr.getDependId(), nr.getDeduceId());
-				if(!trace.contains(nr.getDeduceId())) {
-					ids.add(nr.getDependId());	
+				if(!trace.contains(nr.getDependId())) {
+					ids.add(nr.getDependId());
+					trace.add(nr.getDependId());
 				}
 			}
 		}
