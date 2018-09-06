@@ -177,13 +177,14 @@ public class NeureApi {
 		}
 		return cnt;
 	}
-	@Api("/search")
-	public Map<String,Object> searchDeduce(@Cookie("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds, @Param("nodes")String nodes) {
+	
+	@Api("/searchDepend")
+	public Map<String,Object> searchDepend(@Cookie("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds) {
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
 		cn.and().eq().setName(target);
 		Neure n = neureHolder.fetch(null, cn);
-		Map<Long,Long> depend = new HashMap<>();
+		Map<Long,List<NeureRelation>> relation = new HashMap<>();
 		List<Long> ids = new ArrayList<>();
 		Set<Long> trace = new HashSet<>();
 		if(n != null) {
@@ -198,20 +199,77 @@ public class NeureApi {
 			Page<NeureRelation> page = neureRelationHolder.find(cndNR);
 			ids.clear();
 			for(NeureRelation nr:page.getData()) {
-				depend.put(nr.getDependId(), nr.getDeduceId());
-				if(!trace.contains(nr.getDependId())) {
-					ids.add(nr.getDependId());
-					trace.add(nr.getDependId());
+				if(!trace.contains(nr.getId())) {
+					trace.add(nr.getId());
+					ids.add(nr.getDeduceId());
+					List<NeureRelation> list = relation.get(nr.getDeduceId());
+					if(list == null) {
+						list = new ArrayList<>();
+						relation.put(nr.getDeduceId(), list);
+					}
+					list.add(nr);
 				}
 			}
 		}
+		
 		Cnd<Neure> cnd = new Cnd<>(Neure.class);
 		cnd.setPagesize(10000);
 		cnd.and().in(trace.toArray(new Long[0])).setId(Tpl.USING_LONG);
 		Page<Neure> all = neureHolder.find(cnd);
 		Map<String,Object> result = new HashMap<>();
-		result.put("map", depend);
-		result.put("data", all.getData());
+		result.put("relation", relation);
+		result.put("neures", all.getData());
 		return result;
+	}
+	
+
+	@Api("/searchDeduce")
+	public Map<String,Object> searchDeduce(@Cookie("userId")Long creatorId,@Param("target") String target, @Param("dependIds")List<Long> dependIds, @Param("topicIds")List<Long> topicIds) {
+		Map<String,Object> result = new HashMap<>();
+		Integer maxStep = 5;
+		Cnd<Neure> cn = new Cnd<>(Neure.class);
+		cn.and().eq().setName(target);
+		Neure tagetNeure = neureHolder.fetch(null, cn);
+		Map<Long,List<NeureRelation>> relation = new HashMap<>();
+		List<Long> ids = new ArrayList<>();
+		Set<Long> trace = new HashSet<>();
+		if(tagetNeure == null) {
+			return result;
+		}
+		ids.addAll(dependIds);
+		while(!ids.isEmpty() && (--maxStep >= 0)) {
+			Cnd<NeureRelation> cndNR = new Cnd<>(NeureRelation.class);
+			cndNR.and().in(ids.toArray(new Long[0])).setDependId(Tpl.USING_LONG);
+			cndNR.setPagesize(100);
+			Page<NeureRelation> page = neureRelationHolder.find(cndNR);
+			ids.clear();
+			for(NeureRelation nr:page.getData()) {
+				if(!trace.contains(nr.getId())) {
+					trace.add(nr.getId());
+					ids.add(nr.getDependId());
+					List<NeureRelation> list = relation.get(nr.getDependId());
+					if(list == null) {
+						list = new ArrayList<>();
+						relation.put(nr.getDependId(), list);
+					}
+					list.add(nr);
+				}
+			}
+		}
+		
+		Cnd<Neure> cnd = new Cnd<>(Neure.class);
+		cnd.setPagesize(10000);
+		cnd.and().in(trace.toArray(new Long[0])).setId(Tpl.USING_LONG);
+		Page<Neure> all = neureHolder.find(cnd);
+		result.put("relation", relation);
+		result.put("neures", all.getData());
+		return result;
+	}
+	
+	@Api("/deleteRelation")
+	public int deleteRelations(@Cookie("userId")Long creatorId,@Param("ids")List<Long>ids) {
+		Cnd<NeureRelation> cnd = new Cnd<>(NeureRelation.class);
+		cnd.and().in(ids.toArray(new Long[0])).setId(Tpl.USING_LONG);
+		return neureRelationHolder.delete(cnd);
 	}
 }
