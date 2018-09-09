@@ -8,6 +8,7 @@ import cn.xian.vertxdemo.holder.UserinfoHolder;
 import cn.xian.vertxdemo.i18n.UserMessage;
 import cn.xian.vertxdemo.model.entity.Account;
 import cn.xian.vertxdemo.model.entity.Userinfo;
+import cn.xian.vertxdemo.model.vo.UserToken;
 import cn.xian.vertxdemo.utils.MD5;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpServerRequest;
@@ -19,6 +20,7 @@ import top.onceio.core.db.dao.tpl.Cnd;
 import top.onceio.core.exception.Failed;
 import top.onceio.core.mvc.annocations.Api;
 import top.onceio.core.mvc.annocations.Param;
+import top.onceio.core.util.Tuple2;
 
 @Api("/user")
 public class UserApi {
@@ -48,15 +50,23 @@ public class UserApi {
 		return ui;
 	}
 	@Api(value="/signin", method = ApiMethod.POST)
-	public Userinfo signin(@Validate(nullable=false)@Param("account") String account, @Param("passwd") String passwd) {
+	public Tuple2<UserToken,Userinfo> signin(@Validate(nullable=false)@Param("account") String account, @Param("passwd") String passwd) {
 		Cnd<Account> cnd = new Cnd<>(Account.class);
 		cnd.eq().setAccount(account);
 		Account entity = accountHolder.fetch(null, cnd);
-		if(entity == null || entity.getPasswd().equals(MD5.encode(passwd))) {
+		if(entity == null || !entity.getPasswd().equals(MD5.encode(passwd))) {
 			Failed.throwError("用户不存在或者密码不正确！");
 		}
-		Userinfo ui = userinfoHolder.get(entity.getRefId());
-		return ui;
+		UserToken userToken = new UserToken();
+		userToken.setAccessToken(entity.getAccessToken());
+		userToken.setUserId(entity.getId());
+		Userinfo ui = null;
+		if(entity.getRefId() != null) {
+			ui = userinfoHolder.get(entity.getRefId());	
+		}else {
+			ui = userinfoHolder.get(entity.getId());
+		}
+		return new Tuple2<>(userToken, ui);
 	}
 	
 	@Api("/config/")

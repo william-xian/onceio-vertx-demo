@@ -35,4 +35,13 @@ public class ResouceApi {
 		  }
 		  req.response().sendFile(file);
 	}
+
+	@Api(value="/*",method = ApiMethod.OPTIONS)
+	public void options(HttpServerRequest req) {
+		req.response().setStatusCode(204);
+		req.response().headers().set("Access-Control-Allow-Origin", "http://localhost:8080");
+		req.response().headers().set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,HEAD,OPTIONS,TRACE");
+		req.response().headers().set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+		req.response().end();
+	}
 }

@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 import cn.xian.vertxdemo.holder.NeureHolder;
 import cn.xian.vertxdemo.holder.NeureRelationHolder;
 import cn.xian.vertxdemo.model.entity.Neure;
@@ -22,10 +24,11 @@ import top.onceio.core.db.dao.tpl.Tpl;
 import top.onceio.core.mvc.annocations.Api;
 import top.onceio.core.mvc.annocations.Cookie;
 import top.onceio.core.mvc.annocations.Param;
+import top.onceio.core.util.OUtils;
 
 @Api("/neure_relation")
 public class NeureApi {
-
+	private static final Logger LOGGER = Logger.getLogger(NeureApi.class);
 	@Using
 	private NeureHolder neureHolder;
 	@Using
@@ -117,10 +120,10 @@ public class NeureApi {
 			rels.addAll(Arrays.asList(">","<","!",":","="));
 			List<NeureRelation> nrs = new ArrayList<>();
 			while(matcher.find()) {
-				String a = relation.substring(last, matcher.start());
+				String a = relation.substring(last, matcher.start()).trim();
 				last = matcher.end();
 				group.add(a);
-				String opt = relation.substring(matcher.start(), matcher.end());
+				String opt = relation.substring(matcher.start(), matcher.end()).trim();
 				if(rels.contains(opt)) {
 					rel=opt;
 					cur.add(group);
@@ -141,6 +144,10 @@ public class NeureApi {
 				} else if(opt.equals("\n")) {
 					String dname = right.get(0).get(0);
 					Neure deduced = nameToNeure.get(dname);
+					if(deduced == null) {
+						LOGGER.error(OUtils.toPrettyJson(right));
+						continue;
+					}
 					for (List<String> grp : left) {
 						long comb = deduced.getId();
 						for (String name : grp) {
