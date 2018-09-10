@@ -38,6 +38,10 @@ public class NeureApi {
 
 	private int saveNeures(Long creatorId, Long topicId, String relation, Map<String, Neure> nameToNeure) {
 		String[] neures = relation.split(splitPattern);
+		List<String> neureNames = new ArrayList<>(neures.length);
+		for(String name:neures) {
+			neureNames.add(name.trim());
+		}
 		int cnt = 0;
 		Cnd<Neure> cnd = new Cnd<>(Neure.class);
 		cnd.in(neures).setName(Tpl.USING_S);
@@ -51,9 +55,8 @@ public class NeureApi {
 			nameToNeure.put(n.getName(), n);
 		}
 		List<Neure> news = new ArrayList<>();
-		for(String n:neures) {
-			String name = n.trim();
-			if(!name.equals("") && !nameToNeure.containsKey(name)) {
+		for(String name:neureNames) {
+			if(!nameToNeure.containsKey(name)) {
 				Neure e = new Neure();
 				e.setName(name);
 				e.setCreatorId(creatorId);
@@ -194,11 +197,11 @@ public class NeureApi {
 		Map<Long,List<NeureRelation>> relation = new HashMap<>();
 		List<Long> ids = new ArrayList<>();
 		Set<Long> trace = new HashSet<>();
+		Set<Long> neureIds = new HashSet<>();
 		if(n != null) {
 			ids.add(n.getId());
-			trace.add(n.getId());
 		}
-		
+		neureIds.addAll(ids);
 		while(!ids.isEmpty() && (--maxStep >= 0)) {
 			Cnd<NeureRelation> cndNR = new Cnd<>(NeureRelation.class);
 			cndNR.and().in(ids.toArray(new Long[0])).setDeduceId(Tpl.USING_LONG);
@@ -217,11 +220,12 @@ public class NeureApi {
 					list.add(nr);
 				}
 			}
+			neureIds.addAll(ids);
 		}
 		
 		Cnd<Neure> cnd = new Cnd<>(Neure.class);
 		cnd.setPagesize(10000);
-		cnd.and().in(trace.toArray(new Long[0])).setId(Tpl.USING_LONG);
+		cnd.and().in(neureIds.toArray(new Long[0])).setId(Tpl.USING_LONG);
 		Page<Neure> all = neureHolder.find(cnd);
 		Map<String,Object> result = new HashMap<>();
 		result.put("relation", relation);
@@ -236,15 +240,15 @@ public class NeureApi {
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
 		cn.and().eq().setName(target);
-		Neure tagetNeure = neureHolder.fetch(null, cn);
+		Neure targetNeure = neureHolder.fetch(null, cn);
 		Map<Long,List<NeureRelation>> relation = new HashMap<>();
 		List<Long> ids = new ArrayList<>();
 		Set<Long> trace = new HashSet<>();
-		if(tagetNeure == null) {
-			return result;
-		}
+		Set<Long> neureIds = new HashSet<>();
 		ids.addAll(dependIds);
-		while(!ids.isEmpty() && (--maxStep >= 0)) {
+		neureIds.addAll(ids);
+		boolean find = false;
+		while((!ids.isEmpty() && (--maxStep >= 0)) && !find) {
 			Cnd<NeureRelation> cndNR = new Cnd<>(NeureRelation.class);
 			cndNR.and().in(ids.toArray(new Long[0])).setDependId(Tpl.USING_LONG);
 			cndNR.setPagesize(100);
@@ -253,7 +257,10 @@ public class NeureApi {
 			for(NeureRelation nr:page.getData()) {
 				if(!trace.contains(nr.getId())) {
 					trace.add(nr.getId());
-					ids.add(nr.getDependId());
+					ids.add(nr.getDeduceId());
+					if(targetNeure != null && nr.getDeduceId().equals(targetNeure.getId())) {
+						find = true;
+					}
 					List<NeureRelation> list = relation.get(nr.getDependId());
 					if(list == null) {
 						list = new ArrayList<>();
@@ -262,11 +269,12 @@ public class NeureApi {
 					list.add(nr);
 				}
 			}
+			neureIds.addAll(ids);
 		}
 		
 		Cnd<Neure> cnd = new Cnd<>(Neure.class);
 		cnd.setPagesize(10000);
-		cnd.and().in(trace.toArray(new Long[0])).setId(Tpl.USING_LONG);
+		cnd.and().in(neureIds.toArray(new Long[0])).setId(Tpl.USING_LONG);
 		Page<Neure> all = neureHolder.find(cnd);
 		result.put("relation", relation);
 		result.put("neures", all.getData());
