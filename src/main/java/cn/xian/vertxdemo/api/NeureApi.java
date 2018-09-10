@@ -123,7 +123,7 @@ public class NeureApi {
 				String a = relation.substring(last, matcher.start()).trim();
 				last = matcher.end();
 				group.add(a);
-				String opt = relation.substring(matcher.start(), matcher.end()).trim();
+				String opt = relation.substring(matcher.start(), matcher.end());
 				if(rels.contains(opt)) {
 					rel=opt;
 					cur.add(group);
