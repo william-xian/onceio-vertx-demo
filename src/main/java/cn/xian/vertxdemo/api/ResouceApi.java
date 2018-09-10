@@ -39,9 +39,10 @@ public class ResouceApi {
 	@Api(value="/*",method = ApiMethod.OPTIONS)
 	public void options(HttpServerRequest req) {
 		req.response().setStatusCode(204);
-		req.response().headers().set("Access-Control-Allow-Origin", "http://localhost:8080");
+		req.response().headers().set("Access-Control-Allow-Origin", req.getHeader("Origin"));
+		req.response().headers().set("Access-Control-Allow-Credentials", "true");
 		req.response().headers().set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,HEAD,OPTIONS,TRACE");
-		req.response().headers().set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+		req.response().headers().set("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept, Cookie, userId, accessToken");
 		req.response().end();
 	}
 }
