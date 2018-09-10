@@ -22,7 +22,7 @@ import top.onceio.core.db.dao.Page;
 import top.onceio.core.db.dao.tpl.Cnd;
 import top.onceio.core.db.dao.tpl.Tpl;
 import top.onceio.core.mvc.annocations.Api;
-import top.onceio.core.mvc.annocations.Cookie;
+import top.onceio.core.mvc.annocations.Header;
 import top.onceio.core.mvc.annocations.Param;
 import top.onceio.core.util.OUtils;
 
@@ -101,7 +101,7 @@ public class NeureApi {
 		例： 君子 < 文，质; 坦荡荡;务本
 	 */
 	@Api(value="/push", method=ApiMethod.POST)
-	public int push(@Cookie("userId")Long creatorId,@Param("topicId")Long topicId,@Param("relation")String relation) {
+	public int push(@Header("userId")Long creatorId,@Param("topicId")Long topicId,@Param("relation")String relation) {
 		if(!relation.endsWith("\n")) {
 			relation = relation + "\n";
 		}
@@ -186,7 +186,7 @@ public class NeureApi {
 	}
 	
 	@Api("/searchDepend")
-	public Map<String,Object> searchDepend(@Cookie("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds) {
+	public Map<String,Object> searchDepend(@Header("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds) {
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
 		cn.and().eq().setName(target);
@@ -231,7 +231,7 @@ public class NeureApi {
 	
 
 	@Api("/searchDeduce")
-	public Map<String,Object> searchDeduce(@Cookie("userId")Long creatorId,@Param("target") String target, @Param("dependIds")List<Long> dependIds, @Param("topicIds")List<Long> topicIds) {
+	public Map<String,Object> searchDeduce(@Header("userId")Long creatorId,@Param("target") String target, @Param("dependIds")List<Long> dependIds, @Param("topicIds")List<Long> topicIds) {
 		Map<String,Object> result = new HashMap<>();
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
@@ -274,7 +274,7 @@ public class NeureApi {
 	}
 	
 	@Api("/deleteRelation")
-	public int deleteRelations(@Cookie("userId")Long creatorId,@Param("ids")List<Long>ids) {
+	public int deleteRelations(@Header("userId")Long creatorId,@Param("ids")List<Long>ids) {
 		Cnd<NeureRelation> cnd = new Cnd<>(NeureRelation.class);
 		cnd.and().in(ids.toArray(new Long[0])).setId(Tpl.USING_LONG);
 		return neureRelationHolder.delete(cnd);
