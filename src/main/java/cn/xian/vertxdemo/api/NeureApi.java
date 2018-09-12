@@ -275,6 +275,7 @@ public class NeureApi {
 	public int deleteRelations(@Header("userId")Long creatorId,@Param("ids")List<Long>ids) {
 		Cnd<NeureRelation> cnd = new Cnd<>(NeureRelation.class);
 		cnd.and().in(ids.toArray(new Long[0])).setId(Tpl.USING_LONG);
+		neureRelationHolder.remove(cnd);
 		return neureRelationHolder.delete(cnd);
 	}
 }
