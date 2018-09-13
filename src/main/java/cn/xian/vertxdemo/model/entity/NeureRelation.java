@@ -15,6 +15,9 @@ public class NeureRelation extends OEntity{
 	private String relation;
 	@Col
 	private Long comb;
+	@Col
+	private Long code;
+	
 	public Long getDependId() {
 		return dependId;
 	}
@@ -40,5 +43,19 @@ public class NeureRelation extends OEntity{
 	public void setComb(Long comb) {
 		this.comb = comb;
 	}
-	
+	public Long getCode() {
+		return code;
+	}
+	public void setCode(Long code) {
+		this.code = code;
+	}
+	public Long generateCode() {
+		final int prime = 63;
+		long result = 1;
+		result = prime * result + ((comb == null) ? 0 : comb);
+		result = prime * result + ((deduceId == null) ? 0 : deduceId);
+		result = prime * result + ((dependId == null) ? 0 : dependId);
+		result = prime * result + ((relation == null) ? 0 : relation.hashCode());
+		return result;
+	}
 }

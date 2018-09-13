@@ -20,6 +20,7 @@ import top.onceio.core.annotation.Using;
 import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.db.dao.Page;
 import top.onceio.core.db.dao.tpl.Cnd;
+import top.onceio.core.db.dao.tpl.SelectTpl;
 import top.onceio.core.db.dao.tpl.Tpl;
 import top.onceio.core.mvc.annocations.Api;
 import top.onceio.core.mvc.annocations.Header;
@@ -157,6 +158,7 @@ public class NeureApi {
 							Neure n = nameToNeure.get(name);
 							comb = comb * 63 + n.getId();
 						}
+						comb = comb*63 + rel.hashCode();
 						for (String name : grp) {
 							NeureRelation nr = new NeureRelation();
 							Neure n = nameToNeure.get(name);
@@ -164,6 +166,7 @@ public class NeureApi {
 							nr.setDeduceId(deduced.getId());
 							nr.setComb(comb);
 							nr.setRelation(rel);
+							nr.setCode(nr.generateCode());
 							nrs.add(nr);
 						}
 						/** 双向推导 */
@@ -175,15 +178,29 @@ public class NeureApi {
 								nr.setDependId(deduced.getId());
 								nr.setComb(comb);
 								nr.setRelation(rel);
+								nr.setCode(nr.generateCode());
 								nrs.add(nr);
 							}
 						}
-						
 					}
 				}
 			}
+			Map<Long,NeureRelation> codes = new HashMap<>(nrs.size());
+			for(NeureRelation nr:nrs) {
+				codes.put(nr.getCode(), nr);
+			}
+			Cnd<NeureRelation> rnCnd = new Cnd<>(NeureRelation.class);
+			SelectTpl<NeureRelation> tpl = new SelectTpl<>(NeureRelation.class);
+			tpl.using().setCode(Tpl.USING_LONG);
+			rnCnd.and().in(codes.keySet().toArray(new Long[0])).setCode(Tpl.USING_LONG);
+			rnCnd.setPagesize(Integer.MAX_VALUE);
+			Page<NeureRelation> exist = neureRelationHolder.find(rnCnd);
 			
-			neureRelationHolder.batchInsert(nrs);
+			for(NeureRelation nr:exist.getData()) {
+				codes.remove(nr.getCode());
+			}
+			List<NeureRelation> newNRS = new ArrayList<>(codes.values());
+			neureRelationHolder.batchInsert(newNRS);
 		}
 		return cnt;
 	}
