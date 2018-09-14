@@ -4,6 +4,7 @@ import top.onceio.core.db.annotation.Col;
 import top.onceio.core.db.annotation.Constraint;
 import top.onceio.core.db.annotation.Tbl;
 import top.onceio.core.db.tbl.OEntity;
+import top.onceio.core.util.MD5Updator;
 
 @Tbl(constraints= {@Constraint(colNames= {"dependId","deduceId","relation","comb"})})
 public class NeureRelation extends OEntity{
@@ -50,12 +51,11 @@ public class NeureRelation extends OEntity{
 		this.code = code;
 	}
 	public Long generateCode() {
-		final int prime = 63;
-		long result = 1;
-		result = prime * result + ((comb == null) ? 0 : comb);
-		result = prime * result + ((deduceId == null) ? 0 : deduceId);
-		result = prime * result + ((dependId == null) ? 0 : dependId);
-		result = prime * result + ((relation == null) ? 0 : relation.hashCode());
-		return result;
+		MD5Updator md5 = new MD5Updator();
+		md5.update(((deduceId == null) ? 0 : deduceId));
+		md5.update(((dependId == null) ? 0 : dependId));
+		md5.update(((relation == null) ? "" : relation));
+		md5.update(((comb == null) ? 0 : comb));
+		return md5.toBigInteger().longValue()&(-1>>>1);
 	}
 }

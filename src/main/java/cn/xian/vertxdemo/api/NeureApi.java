@@ -25,6 +25,7 @@ import top.onceio.core.db.dao.tpl.Tpl;
 import top.onceio.core.mvc.annocations.Api;
 import top.onceio.core.mvc.annocations.Header;
 import top.onceio.core.mvc.annocations.Param;
+import top.onceio.core.util.MD5Updator;
 import top.onceio.core.util.OUtils;
 
 @Api("/neure_relation")
@@ -36,21 +37,24 @@ public class NeureApi {
 	private NeureRelationHolder neureRelationHolder;
 	
 	private static final String splitPattern = ">|<|=|:|!|,|;|\n";
+	private static final Set<String> RELS = new HashSet<>(Arrays.asList(">","<","!",":","="));
 
 	private int saveNeures(Long creatorId, Long topicId, String relation, Map<String, Neure> nameToNeure) {
 		String[] neures = relation.split(splitPattern);
 		List<String> neureNames = new ArrayList<>(neures.length);
 		for(String name:neures) {
-			neureNames.add(name.trim());
+			if(!name.trim().isEmpty()) {
+				neureNames.add(name.trim());
+			}
 		}
 		int cnt = 0;
 		Cnd<Neure> cnd = new Cnd<>(Neure.class);
-		cnd.in(neures).setName(Tpl.USING_S);
+		cnd.in(neureNames.toArray(new String[0])).setName(Tpl.USING_S);
 		cnd.and().eq().setCreatorId(creatorId);
 		if(topicId != null) {
 			cnd.and().eq().setTopicId(topicId);
 		}
-		cnd.setPagesize(neures.length);
+		cnd.setPagesize(neureNames.size());
 		Page<Neure> exists = neureHolder.find(cnd);
 		for(Neure n:exists.getData()) {
 			nameToNeure.put(n.getName(), n);
@@ -120,23 +124,15 @@ public class NeureApi {
 			List<String> group = new ArrayList<>();
 			List<List<String>> cur = left;
 			String rel = null;
-			Set<String> rels = new HashSet<>();
-			rels.addAll(Arrays.asList(">","<","!",":","="));
 			List<NeureRelation> nrs = new ArrayList<>();
 			while(matcher.find()) {
 				String a = relation.substring(last, matcher.start()).trim();
 				last = matcher.end();
 				group.add(a);
 				String opt = relation.substring(matcher.start(), matcher.end());
-				if(rels.contains(opt)) {
-					rel=opt;
+				if(RELS.contains(opt)) {
+					rel = opt;
 					cur.add(group);
-					group = new ArrayList<>();
-					if(rel.equals("<")) {
-						cur = right;
-						right = left;
-						left = cur;
-					}
 					cur = right;
 					group = new ArrayList<>();
 					cur.add(group);
@@ -145,7 +141,13 @@ public class NeureApi {
 				} else if(opt.equals(";")) {
 					cur.add(group);
 					group =new ArrayList<>();
+					cur.add(group);
 				} else if(opt.equals("\n")) {
+					if(rel.equals("<")) {
+						cur = right;
+						right = left;
+						left = cur;
+					}
 					String dname = right.get(0).get(0);
 					Neure deduced = nameToNeure.get(dname);
 					if(deduced == null) {
@@ -153,12 +155,14 @@ public class NeureApi {
 						continue;
 					}
 					for (List<String> grp : left) {
-						long comb = deduced.getId();
+						MD5Updator md5 = new MD5Updator();
+						md5.update(deduced.getId());
 						for (String name : grp) {
 							Neure n = nameToNeure.get(name);
-							comb = comb * 63 + n.getId();
+							md5.update(n.getId());
 						}
-						comb = comb*63 + rel.hashCode();
+						md5.update(rel);
+						long comb = md5.toBigInteger().longValue()&(-1>>>1);
 						for (String name : grp) {
 							NeureRelation nr = new NeureRelation();
 							Neure n = nameToNeure.get(name);
@@ -168,23 +172,31 @@ public class NeureApi {
 							nr.setRelation(rel);
 							nr.setCode(nr.generateCode());
 							nrs.add(nr);
-						}
-						/** 双向推导 */
-						if (opt.equals("!") || opt.equals("=") || opt.equals(":")) {
-							for (String name : grp) {
-								NeureRelation nr = new NeureRelation();
-								Neure n = nameToNeure.get(name);
-								nr.setDeduceId(n.getId());
-								nr.setDependId(deduced.getId());
-								nr.setComb(comb);
-								nr.setRelation(rel);
-								nr.setCode(nr.generateCode());
-								nrs.add(nr);
+							
+							/** 双向推导 */
+							if (rel.equals("!") || rel.equals("=") || rel.equals(":")) {
+								NeureRelation nr2 = new NeureRelation();
+								nr2.setDependId(deduced.getId());
+								nr2.setDeduceId(n.getId());
+								nr2.setComb(comb);
+								nr2.setRelation(rel);
+								nr2.setCode(nr2.generateCode());
+								nrs.add(nr2);
 							}
 						}
 					}
+					if(rel.equals("<")) {
+						cur = right;
+						right = left;
+						left = cur;
+					}
+					left.clear();
+					right.clear();
+					group.clear();
+					cur = left;
 				}
 			}
+
 			Map<Long,NeureRelation> codes = new HashMap<>(nrs.size());
 			for(NeureRelation nr:nrs) {
 				codes.put(nr.getCode(), nr);
