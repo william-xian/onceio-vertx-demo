@@ -14,14 +14,18 @@ import org.apache.log4j.Logger;
 
 import cn.xian.vertxdemo.holder.NeureHolder;
 import cn.xian.vertxdemo.holder.NeureRelationHolder;
+import cn.xian.vertxdemo.holder.TopicHolder;
 import cn.xian.vertxdemo.model.entity.Neure;
 import cn.xian.vertxdemo.model.entity.NeureRelation;
+import cn.xian.vertxdemo.model.entity.Topic;
+import io.vertx.core.json.Json;
 import top.onceio.core.annotation.Using;
 import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.db.dao.Page;
 import top.onceio.core.db.dao.tpl.Cnd;
 import top.onceio.core.db.dao.tpl.SelectTpl;
 import top.onceio.core.db.dao.tpl.Tpl;
+import top.onceio.core.exception.Failed;
 import top.onceio.core.mvc.annocations.Api;
 import top.onceio.core.mvc.annocations.Header;
 import top.onceio.core.mvc.annocations.Param;
@@ -33,6 +37,8 @@ public class NeureApi {
 	private static final Logger LOGGER = Logger.getLogger(NeureApi.class);
 	@Using
 	private NeureHolder neureHolder;
+	@Using
+	private TopicHolder topicHolder;
 	@Using
 	private NeureRelationHolder neureRelationHolder;
 	
@@ -113,8 +119,17 @@ public class NeureApi {
 		if(!relation.endsWith("\n")) {
 			relation = relation + "\n";
 		}
+		Topic topic = topicHolder.get(topicId);
+		if(topic == null) {
+			Failed.throwError("topicId(%s)不存在", topicId);
+		} else if(!topic.getOwnner().equals(creatorId)) {
+			topic.setId(null);
+			topic.setOwnner(creatorId);
+			topic = topicHolder.insert(topic);
+		}
+		
 		Map<String,Neure> nameToNeure = new HashMap<>();
-		int cnt = saveNeures(creatorId,topicId,relation, nameToNeure);
+		int cnt = saveNeures(creatorId,topic.getId(),relation, nameToNeure);
 		if(!nameToNeure.isEmpty()) {
 			Pattern pattern = Pattern.compile(splitPattern);
 			Matcher matcher = pattern.matcher(relation);
@@ -143,6 +158,7 @@ public class NeureApi {
 					group =new ArrayList<>();
 					cur.add(group);
 				} else if(opt.equals("\n")) {
+					if(rel == null) continue;
 					if(rel.equals("<")) {
 						cur = right;
 						right = left;
@@ -194,6 +210,7 @@ public class NeureApi {
 					right.clear();
 					group.clear();
 					cur = left;
+					rel = null;
 				}
 			}
 
@@ -212,13 +229,14 @@ public class NeureApi {
 				codes.remove(nr.getCode());
 			}
 			List<NeureRelation> newNRS = new ArrayList<>(codes.values());
-			neureRelationHolder.batchInsert(newNRS);
+			cnt += neureRelationHolder.batchInsert(newNRS);
 		}
 		return cnt;
 	}
 	
 	@Api("/searchDepend")
 	public Map<String,Object> searchDepend(@Header("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds) {
+		System.err.println(Json.encodePrettily(topicIds));
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
 		cn.and().eq().setName(target);
