@@ -18,7 +18,6 @@ import cn.xian.vertxdemo.holder.TopicHolder;
 import cn.xian.vertxdemo.model.entity.Neure;
 import cn.xian.vertxdemo.model.entity.NeureRelation;
 import cn.xian.vertxdemo.model.entity.Topic;
-import io.vertx.core.json.Json;
 import top.onceio.core.annotation.Using;
 import top.onceio.core.beans.ApiMethod;
 import top.onceio.core.db.dao.Page;
@@ -236,16 +235,20 @@ public class NeureApi {
 	
 	@Api("/searchDepend")
 	public Map<String,Object> searchDepend(@Header("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds) {
-		System.err.println(Json.encodePrettily(topicIds));
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
-		cn.and().eq().setName(target);
-		Neure n = neureHolder.fetch(null, cn);
+		if(target != null && !target.isEmpty()) {
+			cn.and().eq().setName(target);	
+		}
+		cn.and().in(topicIds.toArray(new Long[0])).setTopicId(Tpl.USING_LONG);
+		SelectTpl<Neure> tpl = new SelectTpl<Neure>(Neure.class);
+		tpl.using().setId(Tpl.USING_LONG);
+		Page<Neure> targetN = neureHolder.findTpl(tpl,cn);
 		List<NeureRelation> relations = new ArrayList<>();
 		List<Long> ids = new ArrayList<>();
 		Set<Long> trace = new HashSet<>();
 		Set<Long> neureIds = new HashSet<>();
-		if(n != null) {
+		for(Neure n:targetN.getData()) {
 			ids.add(n.getId());
 		}
 		neureIds.addAll(ids);
