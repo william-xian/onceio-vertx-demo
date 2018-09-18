@@ -41,11 +41,11 @@ public class NeureApi {
 	@Using
 	private NeureRelationHolder neureRelationHolder;
 	
-	private static final String splitPattern = ">|<|=|:|!|,|;|\n";
-	private static final Set<String> RELS = new HashSet<>(Arrays.asList(">","<","!",":","="));
+	private static final Pattern splitPattern = Pattern.compile(">|<|=|:|!|,|;|，|；|！|：|\n");
+	private static final Set<String> RELS = new HashSet<>(Arrays.asList(">","<","!",":","！","：","="));
 
 	private int saveNeures(Long creatorId, Long topicId, String relation, Map<String, Neure> nameToNeure) {
-		String[] neures = relation.split(splitPattern);
+		String[] neures = splitPattern.split(relation);
 		List<String> neureNames = new ArrayList<>(neures.length);
 		for(String name:neures) {
 			if(!name.trim().isEmpty()) {
@@ -56,9 +56,7 @@ public class NeureApi {
 		Cnd<Neure> cnd = new Cnd<>(Neure.class);
 		cnd.in(neureNames.toArray(new String[0])).setName(Tpl.USING_S);
 		cnd.and().eq().setCreatorId(creatorId);
-		if(topicId != null) {
-			cnd.and().eq().setTopicId(topicId);
-		}
+		cnd.and().eq().setTopicId(topicId);
 		cnd.setPagesize(neureNames.size());
 		Page<Neure> exists = neureHolder.find(cnd);
 		for(Neure n:exists.getData()) {
@@ -130,8 +128,7 @@ public class NeureApi {
 		Map<String,Neure> nameToNeure = new HashMap<>();
 		int cnt = saveNeures(creatorId,topic.getId(),relation, nameToNeure);
 		if(!nameToNeure.isEmpty()) {
-			Pattern pattern = Pattern.compile(splitPattern);
-			Matcher matcher = pattern.matcher(relation);
+			Matcher matcher = splitPattern.matcher(relation);
 			int last = 0;
 			List<List<String>> left = new ArrayList<>();
 			List<List<String>> right = new ArrayList<>();
@@ -144,6 +141,7 @@ public class NeureApi {
 				last = matcher.end();
 				group.add(a);
 				String opt = relation.substring(matcher.start(), matcher.end());
+				opt = opt.replaceAll("！", "!").replaceAll("，", ",").replaceAll("；", ";").replaceAll("：", ":");
 				if(RELS.contains(opt)) {
 					rel = opt;
 					cur.add(group);
@@ -187,17 +185,6 @@ public class NeureApi {
 							nr.setRelation(rel);
 							nr.setCode(nr.generateCode());
 							nrs.add(nr);
-							
-							/** 双向推导 */
-							if (rel.equals("!") || rel.equals("=") || rel.equals(":")) {
-								NeureRelation nr2 = new NeureRelation();
-								nr2.setDependId(deduced.getId());
-								nr2.setDeduceId(n.getId());
-								nr2.setComb(comb);
-								nr2.setRelation(rel);
-								nr2.setCode(nr2.generateCode());
-								nrs.add(nr2);
-							}
 						}
 					}
 					if(rel.equals("<")) {
@@ -234,13 +221,13 @@ public class NeureApi {
 	}
 	
 	@Api("/searchDepend")
-	public Map<String,Object> searchDepend(@Header("userId")Long creatorId,@Param("target")String target, @Param("topicIds")List<Long> topicIds) {
+	public Map<String,Object> searchDepend(@Header("userId")Long creatorId,@Param("target")String target, @Param("topicIds")Long[] topicIds) {
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
-		if(target != null && !target.isEmpty()) {
+		if(target != null && !target.trim().isEmpty()) {
 			cn.and().eq().setName(target);	
 		}
-		cn.and().in(topicIds.toArray(new Long[0])).setTopicId(Tpl.USING_LONG);
+		cn.and().in(topicIds).setTopicId(Tpl.USING_LONG);
 		SelectTpl<Neure> tpl = new SelectTpl<Neure>(Neure.class);
 		tpl.using().setId(Tpl.USING_LONG);
 		Page<Neure> targetN = neureHolder.findTpl(tpl,cn);
@@ -254,7 +241,11 @@ public class NeureApi {
 		neureIds.addAll(ids);
 		while(!ids.isEmpty() && (--maxStep >= 0)) {
 			Cnd<NeureRelation> cndNR = new Cnd<>(NeureRelation.class);
+			Cnd<NeureRelation> cndOR = new Cnd<>(NeureRelation.class);
 			cndNR.and().in(ids.toArray(new Long[0])).setDeduceId(Tpl.USING_LONG);
+			cndOR.and().in(ids.toArray(new Long[0])).setDependId(Tpl.USING_LONG);
+			cndOR.and().in(new String[] {"!","=",":"}).setRelation(Tpl.USING_S);
+			cndNR.or(cndOR);
 			cndNR.setPagesize(100);
 			Page<NeureRelation> page = neureRelationHolder.find(cndNR);
 			ids.clear();
@@ -278,9 +269,8 @@ public class NeureApi {
 		return result;
 	}
 	
-
 	@Api("/searchDeduce")
-	public Map<String,Object> searchDeduce(@Header("userId")Long creatorId,@Param("target") String target, @Param("dependIds")List<Long> dependIds, @Param("topicIds")List<Long> topicIds) {
+	public Map<String,Object> searchDeduce(@Header("userId")Long creatorId,@Param("target") String target, @Param("dependIds")List<Long> dependIds, @Param("topicIds")Long topicIds) {
 		Map<String,Object> result = new HashMap<>();
 		Integer maxStep = 5;
 		Cnd<Neure> cn = new Cnd<>(Neure.class);
@@ -322,9 +312,9 @@ public class NeureApi {
 	}
 	
 	@Api("/deleteRelation")
-	public int deleteRelations(@Header("userId")Long creatorId,@Param("ids")List<Long>ids) {
+	public int deleteRelations(@Header("userId")Long creatorId,@Param("ids")Long[] ids) {
 		Cnd<NeureRelation> cnd = new Cnd<>(NeureRelation.class);
-		cnd.and().in(ids.toArray(new Long[0])).setId(Tpl.USING_LONG);
+		cnd.and().in(ids).setId(Tpl.USING_LONG);
 		neureRelationHolder.remove(cnd);
 		return neureRelationHolder.delete(cnd);
 	}
