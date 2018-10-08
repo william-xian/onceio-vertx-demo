@@ -36,6 +36,7 @@ public class ThirdPartyApi {
 		OAuth2Token token = auth.getOAuth2Token(authCode);
 		if(token != null) {
 			Cnd<Account> cnd = new Cnd<>(Account.class);
+			cnd.eq().setAccount(token.getUserId());
 			Account account = accountHolder.fetch(null, cnd);
 			if(account != null) {
 				account.setEnv(System.currentTimeMillis()+"");
