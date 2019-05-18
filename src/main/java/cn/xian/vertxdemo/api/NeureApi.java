@@ -41,8 +41,8 @@ public class NeureApi {
 	@Using
 	private NeureRelationHolder neureRelationHolder;
 	
-	private static final Pattern splitPattern = Pattern.compile(">|<|=|:|!|,|;|，|；|！|：|\n");
-	private static final Set<String> RELS = new HashSet<>(Arrays.asList(">","<","!",":","！","：","="));
+	private static final Pattern splitPattern = Pattern.compile(">|<|=|:|!|,|;|\n");
+	private static final Set<String> RELS = new HashSet<>(Arrays.asList(">","<","!",":","="));
 
 	private int saveNeures(Long creatorId, Long topicId, String relation, Map<String, Neure> nameToNeure) {
 		String[] neures = splitPattern.split(relation);
@@ -113,6 +113,15 @@ public class NeureApi {
 	 */
 	@Api(value="/push", method=ApiMethod.POST)
 	public int push(@Header("userId")Long creatorId,@Param("topicId")Long topicId,@Param("relation")String relation) {
+		if(creatorId == null) {
+			throw new RuntimeException("CreatorId cannot be null!");
+		}
+		relation = relation.replaceAll("！", "!")
+				.replaceAll("，", ",")
+				.replaceAll("；", ";")
+				.replaceAll("：", ":")
+				.replaceAll("＞", ">")
+				.replaceAll("＜", "<");
 		if(!relation.endsWith("\n")) {
 			relation = relation + "\n";
 		}
@@ -139,9 +148,11 @@ public class NeureApi {
 			while(matcher.find()) {
 				String a = relation.substring(last, matcher.start()).trim();
 				last = matcher.end();
-				group.add(a);
+				if(!a.isEmpty()){
+					group.add(a);
+				}
 				String opt = relation.substring(matcher.start(), matcher.end());
-				opt = opt.replaceAll("！", "!").replaceAll("，", ",").replaceAll("；", ";").replaceAll("：", ":");
+
 				if(RELS.contains(opt)) {
 					rel = opt;
 					cur.add(group);
@@ -161,6 +172,10 @@ public class NeureApi {
 						right = left;
 						left = cur;
 					}
+					if(right.size() < 0 || right.get(0).size() < 0) {
+						LOGGER.error(OUtils.toPrettyJson(right));
+						continue;
+					}
 					String dname = right.get(0).get(0);
 					Neure deduced = nameToNeure.get(dname);
 					if(deduced == null) {
@@ -172,7 +187,9 @@ public class NeureApi {
 						md5.update(deduced.getId());
 						for (String name : grp) {
 							Neure n = nameToNeure.get(name);
-							md5.update(n.getId());
+							if(n != null) {
+								md5.update(n.getId());
+							}
 						}
 						md5.update(rel);
 						long comb = md5.toBigInteger().longValue()&(-1>>>1);
