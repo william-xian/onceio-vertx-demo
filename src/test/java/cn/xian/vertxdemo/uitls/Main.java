@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main extends JFrame {
-    public static final double E = 0.00000001;
+    public static final double E = 0.001;
     public static final int MAX_D = 6;
     public static final int TOP = -500;
     public static final int BOTTOM = 500;
@@ -16,8 +16,6 @@ public class Main extends JFrame {
     public static final int RIGHT = 500;
 
     public static void main(String[] args) {
-        //if (true) return;
-
         Set<P> op = new HashSet<>();
         Set<L> ol = new HashSet<>();
         Set<C> oc = new HashSet<>();
@@ -29,11 +27,12 @@ public class Main extends JFrame {
         source.addAll(op);
         source.addAll(ol);
         source.addAll(oc);
-        source.addAll(target);
+        //source.addAll(target);
         Set<E> trace = new HashSet<>();
-        path(trace, op, ol, oc, target, new HashSet<>(), new HashSet<>(), new HashSet<>(), 0);
+        Set<E> r = new HashSet<>();
+        path(trace, r, op, ol, oc, target, new HashSet<>(), new HashSet<>(), new HashSet<>(), 0);
 
-        List<E> result = getPath(trace, target);
+        List<E> result = getPath(trace, r);
 
         Collections.sort(result, (a, b) -> a.num - b.num);
         for (E e : result) {
@@ -47,14 +46,14 @@ public class Main extends JFrame {
         es.addAll(source);
         es.addAll(result);
 
-        es.clear();
-        es.addAll(trace);
+        //es.clear();
+        //es.addAll(trace);
 
         Collections.sort(es, (a, b) -> a.num - b.num);
 
         Main frame = new Main();
         frame.setVisible(true);
-        frame.setSize(800, 600);
+        frame.setSize(1200, 700);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         JPanel panel = new JPanel() {
             private int count = 0;
@@ -109,7 +108,7 @@ public class Main extends JFrame {
                     count++;
                 }
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(200);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -135,7 +134,7 @@ public class Main extends JFrame {
         frame.add(btn, BorderLayout.EAST);
     }
 
-    public static void path(Set<E> trace, Set<P> op, Set<L> ol, Set<C> oc, Set<E> target, Set<P> np, Set<L> nl, Set<C> nc, int age) {
+    public static void path(Set<E> trace, Set<E> result, Set<P> op, Set<L> ol, Set<C> oc, Set<E> target, Set<P> np, Set<L> nl, Set<C> nc, int age) {
         System.out.println("path: " + age);
         /**第一步 */
         Set<P> ps = new HashSet<>();
@@ -158,6 +157,10 @@ public class Main extends JFrame {
             //PLCS(cs, new HashSet<>(), new HashSet<>(), op, ol);
             //PCCS(cs, new HashSet<>(), new HashSet<>(), op, oc);
 
+            for(C c:oc) {
+                ps.add(P.create(c.x,c.y,Arrays.asList(c)));
+            }
+
         } else {
             LLPS(ps, ol, nl);
             LCPS(ps, ol, oc, nl, nc);
@@ -170,22 +173,26 @@ public class Main extends JFrame {
             PPCS(cs, op, np);
             //PLCS(cs, op, ol, np, nl);
             //PCCS(cs, op, oc, np, nc);
+            for(C c:nc) {
+                ps.add(P.create(c.x,c.y,Arrays.asList(c)));
+            }
 
             op.addAll(np);
             ol.addAll(nl);
             oc.addAll(nc);
         }
-
-        boolean hasAll = true;
-        trace.addAll(ps);
-        trace.addAll(ls);
+        Set<E> nTrace = new HashSet<>();
+        nTrace.addAll(ps);
+        nTrace.addAll(ls);
+        nTrace.addAll(cs);
         trace.addAll(cs);
-        for (E e : target) {
-            hasAll = trace.contains(e);
-            if (!hasAll) break;
+        for(E e:nTrace) {
+            if(target.remove(e)) {
+                result.add(e);
+            }
         }
-        if (!hasAll && age < Main.MAX_D) {
-            path(trace, op, ol, oc, target, ps, ls, cs, age + 1);
+        if (!target.isEmpty() && age < Main.MAX_D) {
+            path(trace, result, op, ol, oc, target, ps, ls, cs, age + 1);
         }
     }
 
@@ -201,14 +208,11 @@ public class Main extends JFrame {
 
     static void getPath(List<E> result, Map<E, E> all, Set<E> target) {
         Set<E> next = new HashSet<>();
-        for (E t : target) {
-            E e = all.get(t);
-            if (e != null && !result.contains(e)) {
-                if (e.p != null && !e.p.isEmpty()) {
-                    next.addAll(e.p);
-                }
-                result.add(0, e);
+        for (E e : target) {
+            if (e.p != null && !e.p.isEmpty()) {
+                next.addAll(e.p);
             }
+            result.add(0, e);
         }
         if (!next.isEmpty()) {
             getPath(result, all, next);
@@ -304,6 +308,7 @@ public class Main extends JFrame {
 
     static void PPLS(Set<L> ls, Set<P> op, Set<P> np) {
         System.out.println("PPLS " + new Date());
+        np.removeAll(op);
         P[] arr = np.toArray(new P[0]);
         for (int i = 0; i < arr.length - 1; i++) {
             for (int j = i + 1; j < arr.length; j++) {
@@ -319,6 +324,7 @@ public class Main extends JFrame {
 
     static void LLPS(Set<P> ps, Set<L> ol, Set<L> nl) {
         System.out.println("LLPS " + new Date());
+        nl.removeAll(ol);
         L[] arr = nl.toArray(new L[0]);
         for (int i = 0; i < arr.length - 1; i++) {
             for (int j = i + 1; j < arr.length; j++) {
@@ -389,8 +395,14 @@ public class Main extends JFrame {
     static L PPL(P p1, P p2) {
         double a = p1.y - p2.y;
         double b = p2.x - p1.x;
-        double c = p1.y * (p1.x - p2.x) - p1.x * (p1.y - p2.y);
-        return L.create(a, b, c, Arrays.asList(p1, p2));
+        if (Math.abs(a) < Main.E) {
+            return L.create(0, 1, -p1.y, Arrays.asList(p1, p2));
+        } else if (Math.abs(b) < Main.E) {
+            return L.create(1, 0, -p1.x, Arrays.asList(p1, p2));
+        } else {
+            double c = p1.y * (p1.x - p2.x) - p1.x * (p1.y - p2.y);
+            return L.create(a, b, c, Arrays.asList(p1, p2));
+        }
     }
 
     static List<C> PPC(P p1, P p2) {
@@ -475,8 +487,8 @@ public class Main extends JFrame {
                         P p2 = P.create(x2, y2, Arrays.asList(l, c));
                         result = Arrays.asList(p1, p2);
                     } catch (Exception e) {
-                        String exp = String.format("%s,%s",l,c).replaceAll("\\(",".create(");
-                        System.err.printf("LCP(%s);\n",exp);
+                        String exp = String.format("%s,%s", l, c).replaceAll("\\(", ".create(");
+                        System.err.printf("LCP(%s);\n", exp);
                         //e.printStackTrace();
                     }
                     return result;
@@ -573,7 +585,7 @@ class P extends E {
         if (Math.abs(y) < Main.E) {
             y = 0;
         }
-        return String.format("P(%.8f,%.8f)", x, y);
+        return String.format("P(%.3f,%.3f)", x, y);
     }
 
 }
@@ -625,7 +637,7 @@ class L extends E {
         if (Math.abs(c) < Main.E) {
             c = 0;
         }
-        return String.format("L(%.8f,%.8f,%.8f)", a, b, c);
+        return String.format("L(%.3f,%.3f,%.3f)", a, b, c);
     }
 
 }
@@ -667,7 +679,7 @@ class C extends E {
         if (Math.abs(r) < Main.E) {
             r = 0;
         }
-        return String.format("C(%.8f,%.8f,%.8f)", x, y, r);
+        return String.format("C(%.3f,%.3f,%.3f)", x, y, r);
     }
 
 }
