@@ -1,25 +1,22 @@
 package cn.xian.vertxdemo.uitls;
 
 import javax.swing.*;
-import javax.swing.plaf.PanelUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main extends JFrame {
-    public static final double E = 0.0001;
-    public static final int MAX_D = 4;
+    public static final double E = 0.00000001;
+    public static final int MAX_D = 6;
     public static final int TOP = -500;
     public static final int BOTTOM = 500;
     public static final int LEFT = -500;
     public static final int RIGHT = 500;
 
     public static void main(String[] args) {
-
-        LCP(L.create(1.0000, 1.7321, -200.0000), C.create(100.0000, 0.0000, 0.0000));
-
+        //if (true) return;
 
         Set<P> op = new HashSet<>();
         Set<L> ol = new HashSet<>();
@@ -99,7 +96,6 @@ public class Main extends JFrame {
 
             @Override
             public void paint(Graphics g) {
-
                 g.translate(400, 300);
                 g.setColor(Color.RED);
                 g.drawLine(-300, 0, 300, 0);
@@ -156,11 +152,11 @@ public class Main extends JFrame {
 
             PPLS(ls, new HashSet<>(), op);
             PCLS(ls, new HashSet<>(), new HashSet<>(), op, oc);
-            CCLS(ls, new HashSet<>(), oc);
+            //CCLS(ls, new HashSet<>(), oc);
 
             PPCS(cs, new HashSet<>(), op);
-            PLCS(cs, new HashSet<>(), new HashSet<>(), op, ol);
-            PCCS(cs, new HashSet<>(), new HashSet<>(), op, oc);
+            //PLCS(cs, new HashSet<>(), new HashSet<>(), op, ol);
+            //PCCS(cs, new HashSet<>(), new HashSet<>(), op, oc);
 
         } else {
             LLPS(ps, ol, nl);
@@ -169,11 +165,11 @@ public class Main extends JFrame {
 
             PPLS(ls, op, np);
             PCLS(ls, op, oc, np, nc);
-            CCLS(ls, oc, nc);
+            //CCLS(ls, oc, nc);
 
             PPCS(cs, op, np);
-            PLCS(cs, op, ol, np, nl);
-            PCCS(cs, op, oc, np, nc);
+            //PLCS(cs, op, ol, np, nl);
+            //PCCS(cs, op, oc, np, nc);
 
             op.addAll(np);
             ol.addAll(nl);
@@ -378,7 +374,7 @@ public class Main extends JFrame {
     }
 
     static double d(P p, L l) {
-        return (l.a * p.x + l.b * p.y + l.c) / Math.sqrt(l.a * l.a + l.b * l.b);
+        return Math.abs((l.a * p.x + l.b * p.y + l.c) / Math.sqrt(l.a * l.a + l.b * l.b));
     }
 
     static int gcd(int m, int n) {
@@ -399,6 +395,9 @@ public class Main extends JFrame {
 
     static List<C> PPC(P p1, P p2) {
         double r = d(p1, p2);
+        if (Math.abs(r) < Main.E) {
+            return new ArrayList<>();
+        }
         return Arrays.asList(C.create(p1.x, p1.y, r, Arrays.asList(p1, p2)), C.create(p2.x, p2.y, r, Arrays.asList(p1, p2)));
     }
 
@@ -458,7 +457,7 @@ public class Main extends JFrame {
             } else {
                 double A = l.a * l.a / (l.b * l.b) + 1;
                 double B = 2 * l.a * l.c / (l.b * l.b) + 2 * l.a * c.y / l.b - 2 * c.x;
-                double C = c.x * c.x + l.c * l.c / (l.b * l.b) + c.y * c.y - c.r * c.r;
+                double C = c.x * c.x + l.c * l.c / (l.b * l.b) + 2 * l.c * c.y / l.b + c.y * c.y - c.r * c.r;
                 //TODO
                 double qrt = Math.sqrt(B * B / (4 * A * A) - C / A);
                 if (Math.abs(qrt) < Main.E) {
@@ -476,8 +475,9 @@ public class Main extends JFrame {
                         P p2 = P.create(x2, y2, Arrays.asList(l, c));
                         result = Arrays.asList(p1, p2);
                     } catch (Exception e) {
-                        System.err.println("LCP " + l + " & " + c);
-                        e.printStackTrace();
+                        String exp = String.format("%s,%s",l,c).replaceAll("\\(",".create(");
+                        System.err.printf("LCP(%s);\n",exp);
+                        //e.printStackTrace();
                     }
                     return result;
                 }
@@ -573,7 +573,7 @@ class P extends E {
         if (Math.abs(y) < Main.E) {
             y = 0;
         }
-        return String.format("P(%.4f,%.4f)", x, y);
+        return String.format("P(%.8f,%.8f)", x, y);
     }
 
 }
@@ -625,7 +625,7 @@ class L extends E {
         if (Math.abs(c) < Main.E) {
             c = 0;
         }
-        return String.format("L(%.4f,%.4f,%.4f)", a, b, c);
+        return String.format("L(%.8f,%.8f,%.8f)", a, b, c);
     }
 
 }
@@ -667,7 +667,7 @@ class C extends E {
         if (Math.abs(r) < Main.E) {
             r = 0;
         }
-        return String.format("C(%.4f,%.4f,%.4f)", x, y, r);
+        return String.format("C(%.8f,%.8f,%.8f)", x, y, r);
     }
 
 }
