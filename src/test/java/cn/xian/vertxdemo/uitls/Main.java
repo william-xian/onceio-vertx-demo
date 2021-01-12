@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class Main extends JFrame {
     public static final double E = 0.0001;
@@ -32,14 +33,15 @@ public class Main extends JFrame {
     }
 
     public static List<E> q1() {
-        Set<E> trace = new HashSet<>();
-        trace.add(P.create(100, 0));
-        trace.add(P.create(0, 0));
-        trace.add(C.create(0, 0, 100));
+        Set<E> source = new HashSet<>();
+        source.add(P.create(100, 0));
+        source.add(P.create(0, 0));
+        source.add(C.create(0, 0, 100));
 
         Set<E> target = new HashSet<>();
         target.add(L.create(1, 0, -100));
         Set<E> r = new HashSet<>();
+        Map<E, E> trace = source.stream().collect(Collectors.toMap(k -> k, v -> v));
         path(trace, target, r, new ArrayList<>(), 0);
         List<E> result = getPath(trace, r);
         List<E> es = new ArrayList<>();
@@ -48,14 +50,15 @@ public class Main extends JFrame {
     }
 
     public static List<E> q2() {
-        Set<E> trace = new HashSet<>();
-        trace.add(P.create(100, 0));
-        trace.add(P.create(0, 0));
-        trace.add(C.create(0, 0, 100));
+        Set<E> source = new HashSet<>();
+        source.add(P.create(100, 0));
+        source.add(P.create(0, 0));
+        source.add(C.create(0, 0, 100));
         Set<E> target = new HashSet<>();
         target.add(P.create(-100, 0));
         target.add(P.create(0, 100));
         target.add(P.create(0, -100));
+        Map<E, E> trace = source.stream().collect(Collectors.toMap(k -> k, v -> v));
         Set<E> r = new HashSet<>();
         path(trace, target, r, new ArrayList<>(), 0);
         List<E> result = getPath(trace, r);
@@ -66,7 +69,7 @@ public class Main extends JFrame {
 
 
     public static void show(List<E> es) {
-        Collections.sort(es, (a, b) -> a.num - b.num);
+        Collections.sort(es, (a, b) -> a.value() - b.value());
         Main frame = new Main();
         frame.setVisible(true);
         frame.setSize(1200, 700);
@@ -119,7 +122,7 @@ public class Main extends JFrame {
                 g.drawString("count:" + count, -300, -260);
                 if (count < es.size()) {
                     E e = es.get(count);
-                    System.out.println(e.num + " :" + e.display());
+                    System.out.println(e.value() + " :" + e.display());
                     paintE(g, e);
                     count++;
                 }
@@ -150,14 +153,13 @@ public class Main extends JFrame {
         frame.add(btn, BorderLayout.EAST);
     }
 
-    public static void path(Set<E> trace, Set<E> target, Set<E> result, List<Set<E>> aged, int age) {
+    public static void path(Map<E, E> trace, Set<E> target, Set<E> result, List<Set<E>> aged, int age) {
         System.out.println("path: " + age);
         /**第一步 */
         if (age == 0) {
-            aged.add(trace);
+            aged.add(trace.keySet());
         }
-
-        Set<E> cur = new HashSet<>();
+        List<E> cur = new ArrayList<>();
         cur.addAll(aged.get(aged.size() - 1));
         Set<E> newTrace = new HashSet<>();
         //TODO  父代优先
@@ -165,6 +167,7 @@ public class Main extends JFrame {
             if (i != aged.size() - 1) {
                 cur.addAll(aged.get(i));
             }
+            Collections.sort(cur, (a, b) -> a.value() - b.value());
             Set<P> ps = new HashSet<>();
             Set<L> ls = new HashSet<>();
             Set<C> cs = new HashSet<>();
@@ -195,33 +198,29 @@ public class Main extends JFrame {
             newTrace.addAll(ls);
             newTrace.addAll(cs);
 
-            newTrace.removeAll(trace);
             for (E e : newTrace) {
                 if (target.remove(e)) {
                     result.add(e);
                 }
+                if (!trace.containsKey(e)) {
+                    trace.put(e, e);
+                }
             }
             if (target.isEmpty()) {
-                aged.add(newTrace);
-                trace.addAll(newTrace);
-                return;
+                break;
             }
         }
+        newTrace.removeAll(trace.keySet());
         aged.add(newTrace);
-        trace.addAll(newTrace);
 
         if (!target.isEmpty() && age < Main.MAX_D) {
             path(trace, target, result, aged, age + 1);
         }
     }
 
-    static List<E> getPath(Set<E> trace, Set<E> target) {
+    static List<E> getPath(Map<E, E> trace, Set<E> target) {
         List<E> result = new ArrayList<>();
-        Map<E, E> all = new HashMap<>();
-        for (E e : trace) {
-            all.put(e, e);
-        }
-        getPath(result, all, target);
+        getPath(result, trace, target);
         return result;
     }
 
@@ -536,8 +535,21 @@ public class Main extends JFrame {
 
 abstract class E {
     public List<E> p;
-    public final static AtomicInteger cnt = new AtomicInteger(0);
-    public int num = cnt.incrementAndGet();
+
+    int value() {
+        if (p == null || p.isEmpty()) {
+            return 0;
+        } else {
+            int max = 0;
+            for (E e : p) {
+                int v = e.value();
+                if (v > max) {
+                    max = v;
+                }
+            }
+            return max + 1;
+        }
+    }
 
     public abstract String toString();
 
