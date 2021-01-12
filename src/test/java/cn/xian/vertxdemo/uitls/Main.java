@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Main extends JFrame {
@@ -18,8 +17,8 @@ public class Main extends JFrame {
 
     public static void main(String[] args) {
         //show(test());
-        show(q1());
-        //show(q2());
+        //show(q1());
+        show(q2());
     }
 
     public static List<E> test() {
@@ -159,41 +158,50 @@ public class Main extends JFrame {
         if (age == 0) {
             aged.add(trace.keySet());
         }
-        List<E> cur = new ArrayList<>();
-        cur.addAll(aged.get(aged.size() - 1));
+        List<E> ne = new ArrayList<>();
+        ne.addAll(aged.get(aged.size() - 1));
+        Set<P> op = new HashSet<>();
+        Set<L> ol = new HashSet<>();
+        Set<C> oc = new HashSet<>();
+        for (E e : ne) {
+            if (e instanceof P) {
+                op.add((P) e);
+            } else if (e instanceof L) {
+                ol.add((L) e);
+            } else if (e instanceof C) {
+                oc.add((C) e);
+            }
+        }
         Set<E> newTrace = new HashSet<>();
         //TODO  父代优先
         for (int i = 0; i < aged.size(); i++) {
-            if (i != aged.size() - 1) {
-                cur.addAll(aged.get(i));
-            }
-            Collections.sort(cur, (a, b) -> a.value() - b.value());
+            Collections.sort(ne, (a, b) -> a.value() - b.value());
             Set<P> ps = new HashSet<>();
             Set<L> ls = new HashSet<>();
             Set<C> cs = new HashSet<>();
 
-            Set<P> op = new HashSet<>();
-            Set<L> ol = new HashSet<>();
-            Set<C> oc = new HashSet<>();
-            for (E e : cur) {
+            Set<P> np = new HashSet<>();
+            Set<L> nl = new HashSet<>();
+            Set<C> nc = new HashSet<>();
+            for (E e : aged.get(i)) {
                 if (e instanceof P) {
-                    op.add((P) e);
+                    np.add((P) e);
                 } else if (e instanceof L) {
-                    ol.add((L) e);
+                    nl.add((L) e);
                 } else if (e instanceof C) {
-                    oc.add((C) e);
+                    nc.add((C) e);
                 }
             }
-            PPLS(ls, op);
-            PPCS(cs, op);
+            PPLS(ls, op, np);
+            PPCS(cs, op, np);
 
-            LLPS(ps, ol);
-            LCPS(ps, ol, oc);
+            LLPS(ps, ol, nl);
+            LCPS(ps, ol, oc, nl, nc);
 
-            CCPS(ps, oc);
-            PCLS(ls, op, oc);
-            PLCS(cs, op, ol);
-            PCCS(cs, op, oc);
+            CCPS(ps, oc, nc);
+            PCLS(ls, op, oc, np, nc);
+            PLCS(cs, op, ol, np, nl);
+            PCCS(cs, op, oc, np, nc);
             newTrace.addAll(ps);
             newTrace.addAll(ls);
             newTrace.addAll(cs);
@@ -237,25 +245,46 @@ public class Main extends JFrame {
         }
     }
 
-    static void PLCS(Set<C> cs, Set<P> np, Set<L> nl) {
+
+    static void PLCS(Set<C> cs, Set<P> op, Set<L> ol, Set<P> np, Set<L> nl) {
         System.out.println("PLCS " + new Date());
         for (P p : np) {
             for (L l : nl) {
                 cs.addAll(PLC(p, l));
             }
         }
+        for (P p : op) {
+            for (L l : nl) {
+                cs.addAll(PLC(p, l));
+            }
+        }
+        for (P p : np) {
+            for (L l : ol) {
+                cs.addAll(PLC(p, l));
+            }
+        }
     }
 
-    static void PCCS(Set<C> cs, Set<P> np, Set<C> nc) {
+    static void PCCS(Set<C> cs, Set<P> op, Set<C> oc, Set<P> np, Set<C> nc) {
         System.out.println("PCCS " + new Date());
         for (P p : np) {
             for (C c : nc) {
                 cs.addAll(PCC(p, c));
             }
         }
+        for (P p : op) {
+            for (C c : nc) {
+                cs.addAll(PCC(p, c));
+            }
+        }
+        for (P p : np) {
+            for (C c : oc) {
+                cs.addAll(PCC(p, c));
+            }
+        }
     }
 
-    static void PPCS(Set<C> cs, Set<P> np) {
+    static void PPCS(Set<C> cs, Set<P> op, Set<P> np) {
         System.out.println("PPCS " + new Date());
         P[] arr = np.toArray(new P[0]);
         for (int i = 0; i < arr.length - 1; i++) {
@@ -263,52 +292,96 @@ public class Main extends JFrame {
                 cs.addAll(PPC(arr[i], arr[j]));
             }
         }
+        for (P p1 : op) {
+            for (P p2 : np) {
+                cs.addAll((PPC(p1, p2)));
+            }
+        }
     }
 
-    static void PCLS(Set<L> ls, Set<P> np, Set<C> nc) {
+    static void PCLS(Set<L> ls, Set<P> op, Set<C> oc, Set<P> np, Set<C> nc) {
         System.out.println("PCLS " + new Date());
         for (P p : np) {
             for (C c : nc) {
                 ls.add(PCL(p, c));
             }
         }
+        for (P p : op) {
+            for (C c : nc) {
+                ls.add(PCL(p, c));
+            }
+        }
+        for (P p : np) {
+            for (C c : oc) {
+                ls.add(PCL(p, c));
+            }
+        }
     }
 
-    static void PPLS(Set<L> ls, Set<P> np) {
+    static void PPLS(Set<L> ls, Set<P> op, Set<P> np) {
         System.out.println("PPLS " + new Date());
+        np.removeAll(op);
         P[] arr = np.toArray(new P[0]);
         for (int i = 0; i < arr.length - 1; i++) {
             for (int j = i + 1; j < arr.length; j++) {
                 ls.add(PPL(arr[i], arr[j]));
             }
         }
+        for (P p1 : op) {
+            for (P p2 : np) {
+                ls.add((PPL(p1, p2)));
+            }
+        }
     }
 
-    static void LLPS(Set<P> ps, Set<L> nl) {
+    static void LLPS(Set<P> ps, Set<L> ol, Set<L> nl) {
         System.out.println("LLPS " + new Date());
+        nl.removeAll(ol);
         L[] arr = nl.toArray(new L[0]);
         for (int i = 0; i < arr.length - 1; i++) {
             for (int j = i + 1; j < arr.length; j++) {
                 ps.addAll(LLP(arr[i], arr[j]));
             }
         }
+        for (L l1 : ol) {
+            for (L l2 : nl) {
+                ps.addAll((LLP(l1, l2)));
+            }
+        }
     }
 
-    static void LCPS(Set<P> ps, Set<L> nl, Set<C> nc) {
+    static void LCPS(Set<P> ps, Set<L> ol, Set<C> oc, Set<L> nl, Set<C> nc) {
         System.out.println("LCPS " + new Date());
         for (L l : nl) {
             for (C c : nc) {
                 ps.addAll(LCP(l, c));
             }
         }
+        for (L l : ol) {
+            for (C c : nc) {
+                ps.addAll(LCP(l, c));
+            }
+        }
+        for (L l : nl) {
+            for (C c : oc) {
+                ps.addAll(LCP(l, c));
+            }
+        }
     }
 
-    static void CCPS(Set<P> ps, Set<C> nc) {
+    static void CCPS(Set<P> ps, Set<C> oc, Set<C> nc) {
         System.out.println("CCPS " + new Date());
         C[] arr = nc.toArray(new C[0]);
         for (int i = 0; i < arr.length - 1; i++) {
             for (int j = i + 1; j < arr.length; j++) {
                 ps.addAll(CCP(arr[i], arr[j]));
+            }
+        }
+        for (C c1 : oc) {
+            for (C c2 : nc) {
+                if (!c1.equals(c2)) {
+                    ps.addAll((CCP(c1, c2)));
+                }
             }
         }
     }
@@ -422,16 +495,9 @@ public class Main extends JFrame {
                     double x2 = -1f * B / (2 * A) - qrt;
                     double y1 = -1f * (l.a * x1 + l.c) / l.b;
                     double y2 = -1f * (l.a * x2 + l.c) / l.b;
-                    List<P> result = new ArrayList<>();
-                    try {
-                        P p1 = P.create(x1, y1, Arrays.asList(l, c));
-                        P p2 = P.create(x2, y2, Arrays.asList(l, c));
-                        result = Arrays.asList(p1, p2);
-                    } catch (Exception e) {
-                        String exp = String.format("%s,%s", l, c).replaceAll("\\(", ".create(");
-                        System.err.printf("LCP(%s);\n", exp);
-                        //e.printStackTrace();
-                    }
+                    P p1 = P.create(x1, y1, Arrays.asList(l, c));
+                    P p2 = P.create(x2, y2, Arrays.asList(l, c));
+                    List<P> result = Arrays.asList(p1, p2);
                     return result;
                 }
             }
@@ -535,20 +601,24 @@ public class Main extends JFrame {
 
 abstract class E {
     public List<E> p;
+    private int v = -1;
 
     int value() {
-        if (p == null || p.isEmpty()) {
-            return 0;
-        } else {
-            int max = 0;
-            for (E e : p) {
-                int v = e.value();
-                if (v > max) {
-                    max = v;
+        if (v == -1) {
+            if (p == null || p.isEmpty()) {
+                v = 0;
+            } else {
+                int max = 0;
+                for (E e : p) {
+                    int v = e.value();
+                    if (v > max) {
+                        max = v;
+                    }
                 }
+                v = max + 1;
             }
-            return max + 1;
         }
+        return v;
     }
 
     public abstract String toString();
