@@ -16,11 +16,14 @@ public class Main extends JFrame {
     public static final int RIGHT = 500;
 
     public static void main(String[] args) {
+//        LCP(L.create(1.000,-1.291,200.000),C.create(0.000,0.000,122.474));
+
         Set<P> op = new HashSet<>();
         Set<L> ol = new HashSet<>();
         Set<C> oc = new HashSet<>();
         Set<E> target = new HashSet<>();
         op.add(P.create(100, 0));
+        op.add(P.create(0, 0));
         oc.add(C.create(0, 0, 100));
         target.add(L.create(1, 0, -100));
         List<E> source = new ArrayList<>();
@@ -35,12 +38,11 @@ public class Main extends JFrame {
         List<E> result = getPath(trace, r);
 
         Collections.sort(result, (a, b) -> a.num - b.num);
+        System.out.println("<-----------");
         for (E e : result) {
             System.out.println(e.num + " :" + e);
-            if (target.contains(e)) {
-                System.out.println("-----------");
-            }
         }
+        System.out.println("----------->");
 
         List<E> es = new ArrayList<>();
         es.addAll(source);
@@ -157,9 +159,6 @@ public class Main extends JFrame {
             //PLCS(cs, new HashSet<>(), new HashSet<>(), op, ol);
             //PCCS(cs, new HashSet<>(), new HashSet<>(), op, oc);
 
-            for(C c:oc) {
-                ps.add(P.create(c.x,c.y,Arrays.asList(c)));
-            }
 
         } else {
             LLPS(ps, ol, nl);
@@ -173,9 +172,6 @@ public class Main extends JFrame {
             PPCS(cs, op, np);
             //PLCS(cs, op, ol, np, nl);
             //PCCS(cs, op, oc, np, nc);
-            for(C c:nc) {
-                ps.add(P.create(c.x,c.y,Arrays.asList(c)));
-            }
 
             op.addAll(np);
             ol.addAll(nl);
